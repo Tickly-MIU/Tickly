@@ -3,7 +3,7 @@ class Database {
     private $host = "localhost";
     private $user = "root";
     private $pass = "";
-    private $dbname = "project"; // your database name
+    private $dbname = "tickly"; // your database name
 
     public function __construct() {}
 

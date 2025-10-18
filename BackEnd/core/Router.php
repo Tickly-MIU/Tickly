@@ -11,7 +11,7 @@ class Router {
     }
 
     public function dispatch($method, $uri) {
-$uri = str_replace('/ToDoListProject2/Tickly/Tickly/public', '', parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+$uri = str_replace('/Tickly/public', '', parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
         
         if (isset($this->routes[$method][$uri])) {
             [$controllerName, $methodName] = explode('@', $this->routes[$method][$uri]);
