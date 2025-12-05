@@ -1,7 +1,7 @@
 <?php
 return [
     'host' => 'localhost',
-    'dbname' => 'project',
+    'dbname' => 'tickly',
     'username' => 'root',
     'password' => '',
     'charset' => 'utf8mb4'
