@@ -25,10 +25,10 @@
                     </div>
                     @if (password?.errors && password?.touched) {
                         <div class="flex items-center p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50" #InvalidInput role="alert">
-                            @if (password?.hasError('required')) {
+                            @if (password?.getError('required')) {
                                 <p>Password is Required</p>
                             }
-                            @if (password?.hasError('pattern')) {
+                            @if (password?.getError('pattern')) {
                                 <p>Invalid Password</p>
                             }
                         </div>
@@ -42,18 +42,15 @@
                     </button>
 
                     <a routerLink="/reset-password" class="text-gray-500/70 ms-2">Forgot Password</a>
-                    
-                    @if (message) {
-                        <div class="flex items-center p-4 mt-4 text-sm text-black border border-red-950 rounded-lg bg-red-300" role="alert">
+                        <div [class.hidden]="!message" class="flex items-center p-4 mt-4 text-sm text-black border border-red-950 rounded-lg bg-red-300" role="alert">
                             <span class="font-medium">{{message}}</span>
                         </div>
-                    }
                 </form>
         </div>
         <div class="w-1/2 h-full text-center p-5 flex flex-col justify-center items-center">
             <h2 class="font-bold text-3xl text-violet-800">Don't Have An Account</h2>
             <img src="Signup.svg" class="lg:h-[90%]" alt="">
-            <button routerLink="/register" class="text-white disabled:bg-gray-500 disabled:scale-100 bg-violet-800 hover:bg-violet-900 focus:ring-4 focus:outline-none active:scale-[90%] transition-all duration-150 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">
+            <button routerLink="/register" class="text-white  bg-violet-800 hover:bg-violet-900 focus:ring-4 focus:outline-none active:scale-[90%] transition-all duration-150 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">
                 Sign Up
             </button>
         </div>

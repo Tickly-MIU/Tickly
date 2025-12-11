@@ -1,39 +1,38 @@
-import { Component, ElementRef, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, ViewChild,inject} from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router ,RouterLink} from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserLogin } from '../../../core/models/user.interface';
 
+
 @Component({
   selector: 'app-login',
-  standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrl: './login.component.css'
 })
 export class LoginComponent {
 
-  router = inject(Router);
-  AuthService = inject(AuthService)
-  loading: boolean = false;
-  message: string = '';
+  router=inject(Router);
+  AuthService=inject(AuthService)
+  loading:boolean=false;
+  message:string='';
 
-  login(value: UserLogin) { 
-    this.loading = true;
-    this.message = '';  // Reset message
+  login(value:UserLogin){ 
+    this.loading=true;
     this.AuthService.login(value).subscribe({
-      next: (res) => { 
-        this.loading = false;
-        if(res.success)
-          this.router.navigate(['/home']);
-        else{
-          this.message = res.message;
-        }
-        console.log(res);
-        },
+      next: (res) => {
+        this.loading=false;
+        this.message=res.message;
+          if(res.success==true){
+            localStorage.setItem('userRole', res.user.role);
+            this.router.navigate(['/home']);
+            console.log('User role stored in localStorage:', res.user.role);
+          }
+      },
       error: (err) => {
-        this.loading = false;
-        this.message = err.message || 'An error occurred';
+        this.loading=false;
+        this.message=err.message;
       }
     });
   }
