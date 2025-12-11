@@ -5,7 +5,20 @@
   "projects": {
     "ToDoProject": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": {
+          "type": "component"
+        },
+        "@schematics/angular:service": {
+          "type": "service"
+        },
+        "@schematics/angular:directive": {
+          "type": "directive"
+        },
+        "@schematics/angular:interface": {
+          "type": "interface"
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -22,7 +35,9 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+            "node_modules/aos/dist/aos.css",
+              "src/styles.css",
+              "node_modules/@fortawesome/fontawesome-free/css/all.min.css"
             ]
           },
           "configurations": {
@@ -75,7 +90,9 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "node_modules/aos/dist/aos.css",
+              "src/styles.css",
+              "node_modules/@fortawesome/fontawesome-free/css/all.min.css"
             ]
           }
         }

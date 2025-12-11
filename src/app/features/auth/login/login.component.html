@@ -1,0 +1,61 @@
+<div class="lg:h-screen w-full bg-violet-800 flex justify-center items-center p-5">
+    <div class="w-[80%] bg-white lg:h-[90%] rounded-lg shadow-lg shadow-black flex flex-col lg:flex-row justify-center items-center">
+        <div class="w-full lg:w-1/2 h-full p-5  flex flex-col justify-center items-center">
+                <h2 class="text-center font-bold text-3xl text-violet-800 mb-4">Login</h2>
+                <form (ngSubmit)="handleSubmit()" [formGroup]="loginForm" class="w-full">
+                    <div class="relative z-0 w-full mb-5 group ">
+                        <input formControlName="email" type="email" name="floating_email" id="floating_email" [class.!border-b-red-500]="email?.errors && email?.touched" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-mainHv peer" placeholder=" "/>
+                        <label for="floating_email" [class.!text-red-500]="email?.errors && email?.touched" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-main peer-focus:dark:text-main peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Email</label>
+                    </div>
+                    @if (email?.errors && email?.touched) {
+                        <div class="flex items-center p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50" #InvalidInput role="alert">
+                            @if (email?.hasError('required')) {
+                                <p>Email is Required</p>
+                            }
+                            @if (email?.hasError('email')) {
+                                <p>Invalid Email</p>
+                            }
+                        </div>
+                    }
+                    
+                
+                    <div class="relative z-0 w-full mb-5 group">
+                        <input formControlName="password" type="password" name="floating_password" id="floating_password" [class.!border-b-red-500]="password?.errors && password?.touched" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-mainHv peer" placeholder=" "/>
+                        <label for="floating_password" [class.!text-red-500]="password?.errors && password?.touched" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-main peer-focus:dark:text-main peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Password</label>
+                    </div>
+                    @if (password?.errors && password?.touched) {
+                        <div class="flex items-center p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50" #InvalidInput role="alert">
+                            @if (password?.hasError('required')) {
+                                <p>Password is Required</p>
+                            }
+                            @if (password?.hasError('pattern')) {
+                                <p>Invalid Password</p>
+                            }
+                        </div>
+                    }
+                    
+                    <button [disabled]="loginForm.invalid || loading" type="submit" class="text-white disabled:bg-gray-500 disabled:scale-100 bg-violet-800 hover:bg-violet-900 focus:ring-4 focus:outline-none active:scale-[90%] transition-all duration-150 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">
+                        Login
+                        @if (loading) {
+                            <i class="fa-spinner fa-solid fa-spin ms-2"></i>
+                        }
+                    </button>
+
+                    <a routerLink="/reset-password" class="text-gray-500/70 ms-2">Forgot Password</a>
+                    
+                    @if (message) {
+                        <div class="flex items-center p-4 mt-4 text-sm text-black border border-red-950 rounded-lg bg-red-300" role="alert">
+                            <span class="font-medium">{{message}}</span>
+                        </div>
+                    }
+                </form>
+        </div>
+        <div class="w-1/2 h-full text-center p-5 flex flex-col justify-center items-center">
+            <h2 class="font-bold text-3xl text-violet-800">Don't Have An Account</h2>
+            <img src="Signup.svg" class="lg:h-[90%]" alt="">
+            <button routerLink="/register" class="text-white disabled:bg-gray-500 disabled:scale-100 bg-violet-800 hover:bg-violet-900 focus:ring-4 focus:outline-none active:scale-[90%] transition-all duration-150 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">
+                Sign Up
+            </button>
+        </div>
+    </div>
+</div>
