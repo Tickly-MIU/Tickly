@@ -6,5 +6,25 @@ class Controller {
         echo json_encode($data);
         exit;
     }
+
+    /**
+     * Basic model loader by class name.
+     */
+    protected function model($name) {
+        $candidates = [
+            __DIR__ . "/../models/{$name}.php"
+        ];
+
+        foreach ($candidates as $path) {
+            if (file_exists($path)) {
+                require_once $path;
+                if (class_exists($name)) {
+                    return new $name();
+                }
+            }
+        }
+
+        throw new Exception("Model {$name} not found");
+    }
 }
 ?>
