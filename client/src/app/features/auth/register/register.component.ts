@@ -2,8 +2,7 @@ import { Component, ElementRef, ViewChild,inject} from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router,RouterLink} from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { UserLogin } from '../../../core/models/user.interface';
-
+import { UserSignUp } from '../../../core/models/user.interface';
 @Component({
   selector: 'app-register',
   imports: [ReactiveFormsModule,RouterLink],
@@ -18,7 +17,7 @@ export class RegisterComponent {
   loading:boolean=false;
   message:string='';
 
-  login(value:UserLogin){ 
+  login(value:UserSignUp){ 
     this.loading=true;
     this.AuthService.login(value).subscribe({
       next: (res) => {
@@ -35,7 +34,7 @@ export class RegisterComponent {
     });
   }
 
-  loginForm = new FormGroup({
+ registerForm = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email]),
     password: new FormControl('', [Validators.required, Validators.pattern(/^[A-Z][a-z0-9]{5,10}$/)]),
   });
@@ -44,17 +43,17 @@ export class RegisterComponent {
   firstInvalidControl: ElementRef | null = null;
   
   handleSubmit() {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
+    if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
       if (this.firstInvalidControl) {
         this.firstInvalidControl.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
       return;
     }
-    const values = this.loginForm.value;
-    this.login(values as UserLogin);
+    const values = this.registerForm.value;
+    this.login(values as UserSignUp);
   }
 
-  get email() { return this.loginForm.get('email'); }
-  get password() { return this.loginForm.get('password'); }
+  get email() { return this.registerForm.get('email'); }
+  get password() { return this.registerForm.get('password'); }
 }

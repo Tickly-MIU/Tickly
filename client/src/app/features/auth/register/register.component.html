@@ -2,7 +2,7 @@
     <div class="w-[80%] bg-white lg:h-[90%] rounded-lg shadow-lg shadow-black flex flex-col lg:flex-row justify-center items-center">
         <div class="w-full lg:w-1/2 h-full p-5  flex flex-col justify-center items-center">
                 <h2 class="text-center font-bold text-3xl text-violet-800 mb-4">Sign Up</h2>
-                <form (ngSubmit)="handleSubmit()" [formGroup]="loginForm" class="w-full">
+                <form (ngSubmit)="handleSubmit()" [formGroup]="registerForm" class="w-full">
                     <div class="relative z-0 w-full mb-5 group ">
                         <input formControlName="email" type="email" name="floating_email" id="floating_email" [class.!border-b-red-500]="email?.errors && email?.touched" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-mainHv peer" placeholder=" "/>
                         <label for="floating_email" [class.!text-red-500]="email?.errors && email?.touched" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-left peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-main peer-focus:dark:text-main peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Email</label>
@@ -34,7 +34,7 @@
                         </div>
                     }
                     
-                    <button [disabled]="loginForm.invalid || loading" type="submit" class="text-white disabled:bg-gray-500 disabled:scale-100 bg-violet-800 hover:bg-violet-900 focus:ring-4 focus:outline-none active:scale-[90%] transition-all duration-150 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">
+                    <button [disabled]="registerForm.invalid || loading" type="submit" class="text-white disabled:bg-gray-500 disabled:scale-100 bg-violet-800 hover:bg-violet-900 focus:ring-4 focus:outline-none active:scale-[90%] transition-all duration-150 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">
                         Sign Up
                         @if (loading) {
                             <i class="fa-spinner fa-solid fa-spin ms-2"></i>
