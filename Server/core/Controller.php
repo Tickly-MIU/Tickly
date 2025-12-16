@@ -26,5 +26,21 @@ class Controller {
 
         throw new Exception("Model {$name} not found");
     }
+    
+// Log activity
+protected function logActivity($user_id, $action)
+{
+    require_once __DIR__ . '/../models/ActivityLog.php';
+    $log = new ActivityLog();
+    $log->create([
+        'user_id' => $user_id,
+        'action'  => $action
+    ]);
 }
+
+
+}
+
+
+
 ?>
