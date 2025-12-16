@@ -17,8 +17,28 @@ class AuthController extends Controller
             return Response::json(false, 'All fields are required');
         }
 
+        // Validate full name (matches frontend: minLength 2, maxLength 50)
+        $fullName = trim($data['full_name']);
+        if (strlen($fullName) < 2) {
+            return Response::json(false, 'Full Name must be at least 2 characters');
+        }
+        if (strlen($fullName) > 50) {
+            return Response::json(false, 'Full Name must be less than 50 characters');
+        }
+
+        // Validate email format
         if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             return Response::json(false, 'Invalid email format');
+        }
+
+        // Validate password (matches frontend: required, minLength 6, pattern /^[A-Z][a-z0-9]{5,10}$/)
+        $password = trim($data['password']);
+        if (strlen($password) < 6) {
+            return Response::json(false, 'Password must be at least 6 characters');
+        }
+        // Pattern: Must start with uppercase letter, followed by 5-10 lowercase letters or digits (total 6-11 chars)
+        if (!preg_match('/^[A-Z][a-z0-9]{5,10}$/', $password)) {
+            return Response::json(false, 'Password must start with an uppercase letter and contain 6-11 alphanumeric characters');
         }
 
         if ($this->userModel->exists($data['email'])) {
@@ -26,9 +46,9 @@ class AuthController extends Controller
         }
 
         $userData = [
-            'full_name'     => htmlspecialchars(trim($data['full_name'])),
+            'full_name'     => htmlspecialchars($fullName),
             'email'         => strtolower(trim($data['email'])),
-            'password_hash' => password_hash(trim($data['password']), PASSWORD_BCRYPT),
+            'password_hash' => password_hash($password, PASSWORD_BCRYPT),
             'role'          => 'user',
         ];
 
@@ -47,9 +67,16 @@ class AuthController extends Controller
             return Response::json(false, 'Email and password required');
         }
 
+        // Validate password (matches frontend: required, minLength 6)
+        // Note: No pattern validation for login since we're verifying against hash
+        $password = trim($data['password']);
+        if (strlen($password) < 6) {
+            return Response::json(false, 'Password must be at least 6 characters');
+        }
+
         $user = $this->userModel->getByEmail(trim($data['email']));
 
-        if (!$user || !password_verify($data['password'], $user['password_hash'])) {
+        if (!$user || !password_verify($password, $user['password_hash'])) {
             return Response::json(false, 'Invalid email or password', [], 401);
         }
 
