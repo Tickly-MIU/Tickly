@@ -1,0 +1,31 @@
+# Enable rewrite engine
+RewriteEngine On
+
+# Set the base directory
+RewriteBase /Tickly/
+
+# Route API requests to PHP backend
+# Matches /Tickly/api/* and rewrites to Server/public/index.php
+RewriteCond %{REQUEST_URI} ^/Tickly/api/ [NC]
+RewriteRule ^api/(.*)$ Server/public/index.php [L,QSA]
+
+# Serve static files from Angular build directory
+# Map requests to Client/dist/tickly/browser/ directory
+RewriteCond %{REQUEST_URI} !^/Tickly/api/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{DOCUMENT_ROOT}/Tickly/Client/dist/tickly/browser/$1 -f
+RewriteRule ^(.*)$ Client/dist/tickly/browser/$1 [L]
+
+# If the request is for a file or directory that exists in root, serve it
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Route all other requests to Angular app (index.html)
+# This handles Angular routing for client-side navigation
+RewriteCond %{REQUEST_URI} !^/Tickly/api/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ Client/dist/tickly/browser/index.html [L]
+

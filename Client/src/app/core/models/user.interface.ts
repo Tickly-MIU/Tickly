@@ -17,7 +17,9 @@ export interface SignUpResponse {
 export interface LoginResponse {
     success:boolean;
     message:string;
-    user: User;
+    data?: {
+        user: User;
+    };
 }
 export interface User  {
         id:number;

@@ -21,19 +21,37 @@ if ($origin !== '*' && in_array($origin, $allowedOrigins, true)) {
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// Set session cookie params before session_start to ensure correct SameSite
-session_set_cookie_params([
-    'httponly' => true,
-    'samesite' => 'Lax',
-]);
-session_start();
+// Configure session for cross-origin requests on localhost
+if (session_status() === PHP_SESSION_NONE) {
+    // Configure session cookie parameters
+    // Use '/' as path for localhost - works for both dev server (port 4200) and production (port 80)
+    // The cookie will be sent with all requests on localhost regardless of port
+    if (version_compare(PHP_VERSION, '7.3.0', '>=')) {
+        session_set_cookie_params([
+            'lifetime' => 86400, // 24 hours
+            'path' => '/', // Root path works for all localhost requests
+            'domain' => '', // Empty domain works for localhost
+            'secure' => false, // false for localhost (http), true for production (https)
+            'httponly' => true,
+            'samesite' => 'Lax' // Lax works for same-site requests
+        ]);
+    } else {
+        session_set_cookie_params(86400, '/', '', false, true);
+    }
+    
+    session_start();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// echo $_SERVER['REQUEST_METHOD'] . " " . $_SERVER['REQUEST_URI']; exit; // Debug line
+// Debug: Uncomment to see the actual REQUEST_URI
+// echo "Method: " . $_SERVER['REQUEST_METHOD'] . "\n";
+// echo "URI: " . $_SERVER['REQUEST_URI'] . "\n";
+// echo "Path: " . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) . "\n";
+// exit;
 
 require_once __DIR__ . '/../core/Router.php';
 require_once __DIR__ . '/../core/Response.php';

@@ -2,7 +2,7 @@ export const environment = {
   /**
    * Base URL of the backend API for development.
    * Uses /api which will be proxied to the PHP backend via proxy.conf.json
-   * When using ng serve, the proxy routes /api/* to http://localhost:80/Tickly/Server/public
    */
   API_BASE: '/api'
 };
+

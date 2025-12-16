@@ -55,12 +55,35 @@ class AuthController extends Controller
 
         $_SESSION['user_id'] = $user['user_id'];
         $_SESSION['role']    = $user['role'];
+        
+        // Regenerate session ID for security
+        // This creates a new session ID and invalidates the old one
+        session_regenerate_id(true);
 
         return Response::json(true, 'Login successful', [
-            'user_id' => $user['user_id'],
-            'name'    => $user['full_name'],
-            'email'   => $user['email'],
-            'role'    => $user['role'],
+            'user' => [
+                'id'    => $user['user_id'],
+                'name'  => $user['full_name'],
+                'email' => $user['email'],
+                'role'  => $user['role'],
+            ],
+            'session_id' => session_id() // Include session ID in response for debugging
         ]);
+    }
+
+    public function logout($data = [])
+    {
+        // Clear all session variables
+        $_SESSION = [];
+        
+        // Destroy the session cookie
+        if (isset($_COOKIE[session_name()])) {
+            setcookie(session_name(), '', time() - 3600, '/');
+        }
+        
+        // Destroy the session
+        session_destroy();
+        
+        return Response::json(true, 'Logged out successfully');
     }
 }

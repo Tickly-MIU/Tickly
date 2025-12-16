@@ -32,6 +32,13 @@
           },
           "configurations": {
             "production": {
+              "baseHref": "/Tickly/",
+              "fileReplacements": [
+                {
+                  "replace": "src/app/environment/environment.ts",
+                  "with": "src/app/environment/environment.prod.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -47,6 +54,7 @@
               "outputHashing": "all"
             },
             "development": {
+              "baseHref": "/Tickly/",
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
@@ -61,7 +69,8 @@
               "buildTarget": "tickly:build:production"
             },
             "development": {
-              "buildTarget": "tickly:build:development"
+              "buildTarget": "tickly:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"
@@ -86,5 +95,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "aa9e6298-6d2d-4193-8512-4e0645778ac0"
   }
 }

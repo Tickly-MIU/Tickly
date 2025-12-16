@@ -1,24 +1,47 @@
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Tickly - Home Page</title>
-    </head>
-    <body class="bg-gray-50 min-h-screen">
-        <div class="container mx-auto px-4 py-6">
-            <!-- Header -->
-            <header class="mb-8 flex justify-between items-center">
-                <h1 class="text-3xl font-bold text-gray-800">Tickly</h1>
-                <div class="flex items-center space-x-4">
-                    <div class="relative">
-                        <div class="w-10 h-10 rounded-full bg-linear-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
-                            JD
-                        </div>
+<div class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <header class="mb-8 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-gray-800">Tickly</h1>
+            <div class="flex items-center space-x-4">
+                <a routerLink="/profile" class="relative">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer hover:scale-105 transition-transform">
+                        {{ getInitials(userName) }}
                     </div>
-                </div>
-            </header>
+                </a>
+                <button 
+                    (click)="logout()" 
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors shadow-sm flex items-center gap-2">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </header>
 
+        @if (loading) {
+            <div class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-violet-800"></div>
+                <p class="mt-4 text-gray-600">Loading tasks...</p>
+                <p class="mt-2 text-sm text-gray-500">Please wait...</p>
+            </div>
+        }
+
+        @if (error && !loading) {
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-semibold">⚠️ Error loading tasks</p>
+                        <p class="text-sm mt-1">{{ error }}</p>
+                        <p class="text-xs mt-2 text-red-600">Check browser console (F12) for more details</p>
+                    </div>
+                    <button (click)="loadTasks()" class="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors whitespace-nowrap">
+                        Retry
+                    </button>
+                </div>
+            </div>
+        }
+
+        @if (!loading && !error) {
             <div class="flex flex-col lg:flex-row gap-6">
                 <!-- Sidebar -->
                 <div class="lg:w-1/4">
@@ -34,7 +57,7 @@
                                 <li class="sidebar-item p-3 flex items-center cursor-pointer">
                                     <i class="fas fa-inbox mr-3"></i>
                                     <span>Inbox</span>
-                                    <span class="ml-auto bg-white bg-opacity-20 text-xs px-2 py-1 rounded-full">5</span>
+                                    <span class="ml-auto bg-white bg-opacity-20 text-xs px-2 py-1 rounded-full">{{ tasks.length }}</span>
                                 </li>
                                 <li class="sidebar-item p-3 flex items-center cursor-pointer">
                                     <i class="fas fa-user-circle mr-3"></i>
@@ -46,8 +69,6 @@
                                 </li>
                             </ul>
                         </div>
-                        
-                        
                         
                         <div>
                             <h3 class="text-sm uppercase tracking-wider opacity-80 mb-4">Tools</h3>
@@ -76,17 +97,8 @@
                                     <i class="fas fa-check text-xs"></i>
                                 </div>
                                 <div>
-                                    <p class="text-sm text-gray-700">You completed <span class="font-medium">"Design login page"</span></p>
-                                    <p class="text-xs text-gray-500">2 hours ago</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start">
-                                <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
-                                    <i class="fas fa-plus text-xs"></i>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-700">You added <span class="font-medium">"API documentation"</span> to In Progress</p>
-                                    <p class="text-xs text-gray-500">Yesterday</p>
+                                    <p class="text-sm text-gray-700">Total Tasks: <span class="font-medium">{{ tasks.length }}</span></p>
+                                    <p class="text-xs text-gray-500">Last updated: Just now</p>
                                 </div>
                             </div>
                         </div>
@@ -118,13 +130,38 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- To-Do Column -->
+                    @if (tasks.length === 0 && !loading) {
+                        <!-- Empty State: No Tasks -->
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
+                            <div class="max-w-md mx-auto">
+                                <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-violet-100 to-blue-100 flex items-center justify-center animate-pulse">
+                                    <i class="fas fa-tasks text-4xl text-violet-600"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-gray-800 mb-2">Welcome to Tickly!</h3>
+                                <p class="text-gray-600 mb-2">You don't have any tasks yet.</p>
+                                <p class="text-sm text-gray-500 mb-6">Get started by creating your first task and organize your work!</p>
+                                <button 
+                                    (click)="createFirstTask()" 
+                                    class="px-6 py-3 bg-violet-800 text-white rounded-lg font-medium hover:bg-violet-900 transition-colors shadow-md flex items-center justify-center mx-auto gap-2 mb-4">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Create Your First Task</span>
+                                </button>
+                                <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>You can also use the floating + button</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (tasks.length > 0 || loading) {
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- In-Progress Column (shows tasks with status='pending') -->
                         <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-100">
                             <div class="category-header p-4 rounded-t-2xl flex justify-between items-center" style="border-color: var(--todo-color); background-color: rgba(59, 130, 246, 0.05);">
                                 <div class="flex items-center">
-                                    <h3 class="font-semibold text-gray-700 text-lg mr-2" contenteditable="true">To-Do</h3>
-                                    <span class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded-full">3</span>
+                                    <h3 class="font-semibold text-gray-700 text-lg mr-2">In-Progress</h3>
+                                    <span class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded-full" #countElement>{{ todoTasks.length }}</span>
                                 </div>
                                 <div class="relative">
                                     <i class="fas fa-palette text-gray-500 cursor-pointer color-trigger" data-target="todo"></i>
@@ -138,116 +175,44 @@
                                     </div>
                                 </div>
                             </div>
-                            <div id="todo-column" class="p-4 min-h-[200px] space-y-4">
-                                <!-- Task 1 -->
-                                <div class="task-card bg-white rounded-xl shadow p-4 cursor-move" style="border-left-color: var(--todo-color);">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h4 class="font-medium text-gray-800">Implement authentication and authorization mechanisms</h4>
-                                        <i class="fas fa-ellipsis-h text-gray-400"></i>
-                                    </div>
-                                    <div class="flex items-center text-sm text-gray-500 mb-3">
-                                        <i class="fas fa-tasks mr-1"></i>
-                                        <span>3 sub-tasks</span>
-                                    </div>
-                                    <div class="flex flex-wrap gap-2 mb-3">
-                                        <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Security</span>
-                                        <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Critical</span>
-                                    </div>
-                                    <div class="flex justify-between items-center text-sm text-gray-500">
-                                        <div class="flex items-center">
-                                            <span class="mr-2">1.0%</span>
-                                            <span>2.0%</span>
+                            <div #todoColumn id="todo-column" class="p-4 min-h-[200px] space-y-4">
+                                @for (task of todoTasks; track task.task_id) {
+                                    <div class="task-card bg-white rounded-xl shadow p-4 cursor-move" style="border-left-color: var(--todo-color);">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h4 class="font-medium text-gray-800">{{ task.title }}</h4>
+                                            <div class="flex items-center space-x-2">
+                                                <button (click)="updateTaskStatus(task, 'completed')" class="text-gray-400 hover:text-green-600" title="Mark as Done">
+                                                    <i class="fas fa-check text-xs"></i>
+                                                </button>
+                                                <button (click)="deleteTask(task.task_id)" class="text-gray-400 hover:text-red-600" title="Delete">
+                                                    <i class="fas fa-trash text-xs"></i>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <span>Tomorrow</span>
+                                        @if (task.description) {
+                                            <p class="text-sm text-gray-600 mb-2">{{ task.description }}</p>
+                                        }
+                                        <div class="flex flex-wrap gap-2 mb-3">
+                                            <span [class]="'text-xs px-2 py-1 rounded-full ' + getPriorityColor(task.priority)">
+                                                {{ task.priority }}
+                                            </span>
+                                        </div>
+                                        @if (task.deadline) {
+                                            <div class="flex justify-between items-center text-sm text-gray-500">
+                                                <span>{{ formatDate(task.deadline) }}</span>
+                                            </div>
+                                        }
                                     </div>
-                                    <div class="progress-bar mt-2">
-                                        <div class="progress-fill bg-blue-500" style="width: 10%"></div>
+                                }
+                                @if (todoTasks.length === 0 && !loading && tasks.length > 0) {
+                                    <div class="text-center text-gray-400 py-8">
+                                        <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+                                            <i class="fas fa-inbox text-2xl"></i>
+                                        </div>
+                                        <p class="text-sm font-medium">No pending tasks</p>
+                                        <p class="text-xs mt-1 text-gray-500">All tasks are completed!</p>
                                     </div>
-                                </div>
-
-                                <!-- Task 2 -->
-                                <div class="task-card bg-white rounded-xl shadow p-4 cursor-move" style="border-left-color: var(--todo-color);">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h4 class="font-medium text-gray-800">Design user interface for login and registration pages</h4>
-                                        <i class="fas fa-ellipsis-h text-gray-400"></i>
-                                    </div>
-                                    <div class="flex items-center text-sm text-gray-500 mb-3">
-                                        <i class="fas fa-tasks mr-1"></i>
-                                        <span>4 sub-tasks</span>
-                                    </div>
-                                    <div class="flex flex-wrap gap-2 mb-3">
-                                        <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">UI/UX</span>
-                                        <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">High</span>
-                                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Workload</span>
-                                    </div>
-                                    <div class="progress-bar mt-2">
-                                        <div class="progress-fill bg-purple-500" style="width: 25%"></div>
-                                    </div>
-                                </div>
-
-                                <!-- Task 3 -->
-                                <div class="task-card bg-white rounded-xl shadow p-4 cursor-move" style="border-left-color: var(--todo-color);">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h4 class="font-medium text-gray-800">Integrate OAuth providers for social login options</h4>
-                                        <i class="fas fa-ellipsis-h text-gray-400"></i>
-                                    </div>
-                                    <div class="flex items-center text-sm text-gray-500 mb-3">
-                                        <i class="fas fa-tasks mr-1"></i>
-                                        <span>2 sub-tasks</span>
-                                    </div>
-                                    <div class="flex flex-wrap gap-2 mb-3">
-                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">User engagement</span>
-                                    </div>
-                                    <div class="flex justify-between items-center text-sm text-gray-500">
-                                        <span>3.50%</span>
-                                        <span>Next week</span>
-                                    </div>
-                                    <div class="progress-bar mt-2">
-                                        <div class="progress-fill bg-green-500" style="width: 5%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- In Progress Column -->
-                        <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-100">
-                            <div class="category-header p-4 rounded-t-2xl flex justify-between items-center" style="border-color: var(--inprogress-color); background-color: rgba(245, 158, 11, 0.05);">
-                                <div class="flex items-center">
-                                    <h3 class="font-semibold text-gray-700 text-lg mr-2" contenteditable="true">In Progress</h3>
-                                    <span class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded-full">5</span>
-                                </div>
-                                <div class="relative">
-                                    <i class="fas fa-palette text-gray-500 cursor-pointer color-trigger" data-target="inprogress"></i>
-                                    <div class="color-picker" id="color-picker-inprogress">
-                                        <div class="color-option bg-blue-500" data-color="#3b82f6"></div>
-                                        <div class="color-option bg-red-500" data-color="#ef4444"></div>
-                                        <div class="color-option bg-green-500" data-color="#10b981"></div>
-                                        <div class="color-option bg-yellow-500" data-color="#f59e0b"></div>
-                                        <div class="color-option bg-purple-500" data-color="#8b5cf6"></div>
-                                        <div class="color-option bg-pink-500" data-color="#ec4899"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="inprogress-column" class="p-4 min-h-[200px] space-y-4">
-                                <!-- Task 4 -->
-                                <div class="task-card bg-white rounded-xl shadow p-4 cursor-move" style="border-left-color: var(--inprogress-color);">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h4 class="font-medium text-gray-800">Develop API endpoints for user management</h4>
-                                        <i class="fas fa-ellipsis-h text-gray-400"></i>
-                                    </div>
-                                    <div class="flex items-center text-sm text-gray-500 mb-3">
-                                        <i class="fas fa-tasks mr-1"></i>
-                                        <span>4 sub-tasks</span>
-                                    </div>
-                                    <div class="flex flex-wrap gap-2 mb-3">
-                                        <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">Backend Development</span>
-                                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Data handling</span>
-                                        <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">High</span>
-                                    </div>
-                                    <div class="progress-bar mt-2">
-                                        <div class="progress-fill bg-indigo-500" style="width: 65%"></div>
-                                    </div>
-                                </div>
+                                }
                             </div>
                         </div>
 
@@ -255,8 +220,8 @@
                         <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-100">
                             <div class="category-header p-4 rounded-t-2xl flex justify-between items-center" style="border-color: var(--done-color); background-color: rgba(16, 185, 129, 0.05);">
                                 <div class="flex items-center">
-                                    <h3 class="font-semibold text-gray-700 text-lg mr-2" contenteditable="true">Done</h3>
-                                    <span class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded-full">4</span>
+                                    <h3 class="font-semibold text-gray-700 text-lg mr-2">Done</h3>
+                                    <span class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded-full" #countElement>{{ doneTasks.length }}</span>
                                 </div>
                                 <div class="relative">
                                     <i class="fas fa-palette text-gray-500 cursor-pointer color-trigger" data-target="done"></i>
@@ -270,60 +235,54 @@
                                     </div>
                                 </div>
                             </div>
-                            <div id="done-column" class="p-4 min-h-[200px] space-y-4">
-                                <!-- Task 5 -->
-                                <div class="task-card bg-white rounded-xl shadow p-4 cursor-move" style="border-left-color: var(--done-color);">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h4 class="font-medium text-gray-800">Design user profile management features</h4>
-                                        <i class="fas fa-ellipsis-h text-gray-400"></i>
+                            <div #doneColumn id="done-column" class="p-4 min-h-[200px] space-y-4">
+                                @for (task of doneTasks; track task.task_id) {
+                                    <div class="task-card bg-white rounded-xl shadow p-4 cursor-move opacity-75" style="border-left-color: var(--done-color);">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h4 class="font-medium text-gray-800 line-through">{{ task.title }}</h4>
+                                            <div class="flex items-center space-x-2">
+                                                <button (click)="updateTaskStatus(task, 'pending')" class="text-gray-400 hover:text-blue-600" title="Reopen">
+                                                    <i class="fas fa-undo text-xs"></i>
+                                                </button>
+                                                <button (click)="deleteTask(task.task_id)" class="text-gray-400 hover:text-red-600" title="Delete">
+                                                    <i class="fas fa-trash text-xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        @if (task.description) {
+                                            <p class="text-sm text-gray-600 mb-2">{{ task.description }}</p>
+                                        }
+                                        <div class="flex flex-wrap gap-2 mb-3">
+                                            <span [class]="'text-xs px-2 py-1 rounded-full ' + getPriorityColor(task.priority)">
+                                                {{ task.priority }}
+                                            </span>
+                                        </div>
+                                        @if (task.deadline) {
+                                            <div class="flex justify-between items-center text-sm text-gray-500">
+                                                <span>{{ formatDate(task.deadline) }}</span>
+                                            </div>
+                                        }
                                     </div>
-                                    <div class="flex items-center text-sm text-gray-500 mb-3">
-                                        <i class="fas fa-tasks mr-1"></i>
-                                        <span>4 sub-tasks</span>
+                                }
+                                @if (doneTasks.length === 0 && !loading && tasks.length > 0) {
+                                    <div class="text-center text-gray-400 py-8">
+                                        <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+                                            <i class="fas fa-check-circle text-2xl"></i>
+                                        </div>
+                                        <p class="text-sm font-medium">No completed tasks</p>
+                                        <p class="text-xs mt-1 text-gray-500">Complete tasks to see them here</p>
                                     </div>
-                                    <div class="flex flex-wrap gap-2 mb-3">
-                                        <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">User Experience</span>
-                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Profile customization</span>
-                                        <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">High</span>
-                                    </div>
-                                    <div class="flex justify-between items-center text-sm text-gray-500">
-                                        <span>3.15%</span>
-                                        <span>10 Jul</span>
-                                    </div>
-                                    <div class="progress-bar mt-2">
-                                        <div class="progress-fill bg-green-500" style="width: 100%"></div>
-                                    </div>
-                                </div>
-
-                                <!-- Task 6 -->
-                                <div class="task-card bg-white rounded-xl shadow p-4 cursor-move" style="border-left-color: var(--done-color);">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h4 class="font-medium text-gray-800">Develop a responsive UI framework</h4>
-                                        <i class="fas fa-ellipsis-h text-gray-400"></i>
-                                    </div>
-                                    <div class="flex items-center text-sm text-gray-500 mb-3">
-                                        <i class="fas fa-tasks mr-1"></i>
-                                        <span>5 sub-tasks</span>
-                                    </div>
-                                    <div class="flex flex-wrap gap-2 mb-3">
-                                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Design</span>
-                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Medium</span>
-                                    </div>
-                                    <div class="progress-bar mt-2">
-                                        <div class="progress-fill bg-blue-500" style="width: 100%"></div>
-                                    </div>
-                                </div>
+                                }
                             </div>
                         </div>
                     </div>
+                    }
                 </div>
             </div>
-        </div>
+        }
 
-        <div class="floating-add-btn">
+        <div class="floating-add-btn" title="Add New Task">
             <i class="fas fa-plus"></i>
         </div>
-
-
-    </body>
-    </html>
+    </div>
+</div>

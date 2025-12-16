@@ -1,0 +1,34 @@
+/* Register Component Styles */
+.register-container {
+  min-height: 100vh;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #7c3aed;
+}
+
+.error-message {
+  animation: slideDown 0.3s ease-out;
+}
+
+.success-message {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading spinner animation */
+.fa-spinner {
+  display: inline-block;
+}
+
