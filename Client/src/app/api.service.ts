@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from './environment/environment';
 
-// Point to the PHP backend under the Tickly public dir (default XAMPP/Apache path).
-// If you run `php -S localhost:8000 -t public` instead, switch this to that URL.
-const API_BASE = 'http://localhost/Tickly/public';
+// Base URL of the PHP backend; endpoints are built as `${API_BASE}/api/...`
+const API_BASE = environment.API_BASE;
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -42,11 +42,6 @@ export class ApiService {
   }
 
   deleteTask(task_id: number) {
-    return this.http.post(
-      `${API_BASE}/api/tasks/delete`,
-      { task_id },
-      { withCredentials: true }
-    );
+    return this.http.post(`${API_BASE}/api/tasks/delete`, { task_id }, { withCredentials: true });
   }
 }
-
