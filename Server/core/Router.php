@@ -14,7 +14,11 @@ class Router {
         // Normalize the request path and strip the public subdirectory if present
         $path = parse_url($uri, PHP_URL_PATH);
         $path = rtrim($path, '/') ?: '/';
-        $path = str_replace('/Tickly/public', '', $path);
+        // Adjust this to match the actual URL path where your public folder is served.
+        // In this project the API is served from:
+        //   http://localhost/Tickly/Server/public/api/...
+        // so we strip `/Tickly/Server/public` from the incoming path.
+        $path = str_replace('/Tickly/Server/public', '', $path);
 
         // Collect request data to pass into controller methods
         $payload = null;
