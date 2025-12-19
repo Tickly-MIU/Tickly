@@ -22,22 +22,28 @@ class Router {
         //   1. Direct: http://localhost/Tickly/Server/public/api/...
         //   2. Via .htaccess rewrite: http://localhost/Tickly/api/... (rewritten to Server/public/index.php)
         //   3. Via Angular proxy: http://localhost:4200/api/... (proxied to http://localhost:80/Tickly/Server/public/api/...)
-        // Handle various path formats - check longer paths first, but only strip the base path, not /api
-        $pathReplacements = [
-            '/Tickly/Server/public',      // Direct path and proxy path (strip this, keep /api/...)
-            '/Tickly/api',                // .htaccess rewrite path
-            '/Tickly/api/',               // .htaccess rewrite path (with trailing slash)
-            '/Tickly/Server/public/',     // Direct path (with trailing slash)
-            'Tickly/Server/public',       // Without leading slash (direct/proxy)
-            'Tickly/api',                 // Without leading slash
-            '/api',                       // Just /api (if base is different) - don't strip this!
-            'api'                         // Just api - don't strip this!
-        ];
-        
-        foreach ($pathReplacements as $replacement) {
-            if (strpos($path, $replacement) === 0) {
-                $path = substr($path, strlen($replacement));
-                break;
+        //   4. Heroku: https://app.herokuapp.com/api/... (path is already /api/..., keep as-is)
+        // Handle various path formats - check longer paths first, but NEVER strip /api
+        // If path already starts with /api, use it as-is (Heroku/production case)
+        if (strpos($path, '/api') === 0) {
+            // Path already starts with /api, use as-is (Heroku/production)
+            // No replacement needed
+        } else {
+            // Local development paths - strip base paths but keep /api
+            $pathReplacements = [
+                '/Tickly/Server/public',      // Direct path and proxy path (strip this, keep /api/...)
+                '/Tickly/api',                // .htaccess rewrite path
+                '/Tickly/api/',               // .htaccess rewrite path (with trailing slash)
+                '/Tickly/Server/public/',     // Direct path (with trailing slash)
+                'Tickly/Server/public',       // Without leading slash (direct/proxy)
+                'Tickly/api',                 // Without leading slash
+            ];
+            
+            foreach ($pathReplacements as $replacement) {
+                if (strpos($path, $replacement) === 0) {
+                    $path = substr($path, strlen($replacement));
+                    break;
+                }
             }
         }
         
