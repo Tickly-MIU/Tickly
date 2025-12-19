@@ -1,8 +1,8 @@
 export const environment = {
   /**
    * Base URL of the backend API for production.
-   * For Heroku deployment, using relative path '/api'.
-   * If backend is on a different domain, update this to the full URL (e.g., 'https://your-backend.herokuapp.com/api').
+   * Frontend: https://tickly-3f3fb62f8bf7.herokuapp.com/
+   * Backend: https://tickly.page.gd/server
    */
-  API_BASE: '/api'
+  API_BASE: 'https://tickly.page.gd/server'
 };
