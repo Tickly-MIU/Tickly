@@ -4,5 +4,5 @@ export const environment = {
    * Frontend: https://tickly-3f3fb62f8bf7.herokuapp.com/
    * Backend: https://tickly.page.gd/server
    */
-  API_BASE: 'https://tickly.page.gd/server/public/api'
+  API_BASE: 'https://tickly.page.gd/Server/public/api'
 };
