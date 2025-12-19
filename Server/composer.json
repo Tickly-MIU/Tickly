@@ -1,0 +1,14 @@
+{
+    "name": "tickly/server",
+    "description": "Tickly API Server",
+    "type": "project",
+    "require": {
+        "php": "^7.4|^8.0|^8.1|^8.2|^8.3"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "echo 'Heroku deployment ready'"
+        ]
+    }
+}
+
