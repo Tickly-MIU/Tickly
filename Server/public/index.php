@@ -1,4 +1,21 @@
 <?php
+// Error handling - catch all errors and return JSON
+set_error_handler(function($severity, $message, $file, $line) {
+    if (!(error_reporting() & $severity)) {
+        return false;
+    }
+    require_once __DIR__ . '/../core/Response.php';
+    Response::json(false, "PHP Error: $message in $file on line $line", [], 500);
+});
+
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error !== NULL && in_array($error['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE])) {
+        require_once __DIR__ . '/../core/Response.php';
+        Response::json(false, "Fatal Error: {$error['message']} in {$error['file']} on line {$error['line']}", [], 500);
+    }
+});
+
 // Configure CORS + session so cookies can be sent with API requests
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
@@ -84,13 +101,24 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/../core/Router.php';
-require_once __DIR__ . '/../core/Response.php';
-require_once __DIR__ . '/../core/AuthMiddleware.php';
+// Wrap everything in try-catch for proper error handling
+try {
+    require_once __DIR__ . '/../core/Router.php';
+    require_once __DIR__ . '/../core/Response.php';
+    require_once __DIR__ . '/../core/AuthMiddleware.php';
 
-// Register routes before dispatching the current request
-$router = new Router();
-require_once __DIR__ . '/../routes/api.php';
+    // Register routes before dispatching the current request
+    $router = new Router();
+    require_once __DIR__ . '/../routes/api.php';
 
-$router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+    $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+} catch (Exception $e) {
+    require_once __DIR__ . '/../core/Response.php';
+    error_log("Uncaught Exception: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+    Response::json(false, "Server Error: " . $e->getMessage(), [], 500);
+} catch (Error $e) {
+    require_once __DIR__ . '/../core/Response.php';
+    error_log("Fatal Error: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+    Response::json(false, "Server Error: " . $e->getMessage(), [], 500);
+}
 

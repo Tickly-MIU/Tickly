@@ -77,30 +77,41 @@ class Router {
             $payload = $_GET ?? [];
         }
 
+        // Helper function to execute controller action
+        $executeController = function($controllerName, $methodName, $payload) {
+            try {
+                require_once __DIR__ . "/../controllers/$controllerName.php";
+                $controller = new $controllerName();
+                $controller->$methodName($payload);
+            } catch (Exception $e) {
+                require_once __DIR__ . '/Response.php';
+                error_log("Controller Error: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+                Response::json(false, "Error: " . $e->getMessage(), [], 500);
+            } catch (Error $e) {
+                require_once __DIR__ . '/Response.php';
+                error_log("Controller Fatal Error: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+                Response::json(false, "Error: " . $e->getMessage(), [], 500);
+            }
+        };
+        
         // Try exact match first
         if (isset($this->routes[$method][$path])) {
             [$controllerName, $methodName] = explode('@', $this->routes[$method][$path]);
-            require_once __DIR__ . "/../controllers/$controllerName.php";
-            $controller = new $controllerName();
-            $controller->$methodName($payload);
+            $executeController($controllerName, $methodName, $payload);
             return;
         }
         
         // Try with leading slash if path doesn't have one
         if ($path[0] !== '/' && isset($this->routes[$method]['/' . $path])) {
             [$controllerName, $methodName] = explode('@', $this->routes[$method]['/' . $path]);
-            require_once __DIR__ . "/../controllers/$controllerName.php";
-            $controller = new $controllerName();
-            $controller->$methodName($payload);
+            $executeController($controllerName, $methodName, $payload);
             return;
         }
         
         // Try without leading slash if path has one
         if ($path[0] === '/' && strlen($path) > 1 && isset($this->routes[$method][substr($path, 1)])) {
             [$controllerName, $methodName] = explode('@', $this->routes[$method][substr($path, 1)]);
-            require_once __DIR__ . "/../controllers/$controllerName.php";
-            $controller = new $controllerName();
-            $controller->$methodName($payload);
+            $executeController($controllerName, $methodName, $payload);
             return;
         }
         
