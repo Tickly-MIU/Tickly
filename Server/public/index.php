@@ -22,7 +22,8 @@ $allowedOrigins = [
     'http://127.0.0.1:5173',
     'http://127.0.0.1:3000',
     'https://tickly.page.gd',           // Production domain
-    'https://tickly-3f3fb62f8bf7.herokuapp.com', // Heroku (if used)
+    'https://tickly-3f3fb62f8bf7.herokuapp.com', // Heroku (old)
+    'https://tickly-backend-a247ddfb7eba.herokuapp.com', // Heroku (current)
     'https://dash.infinityfree.com',     // InfinityFree dashboard
     'https://www.dash.infinityfree.com', // InfinityFree dashboard (www)
 ];
