@@ -84,12 +84,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Debug: Uncomment to see the actual REQUEST_URI
-echo "Method: " . $_SERVER['REQUEST_METHOD'] . "\n";
-echo "URI: " . $_SERVER['REQUEST_URI'] . "\n";
-echo "Path: " . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) . "\n";
-exit;
-
 require_once __DIR__ . '/../core/Router.php';
 require_once __DIR__ . '/../core/Response.php';
 require_once __DIR__ . '/../core/AuthMiddleware.php';
