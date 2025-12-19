@@ -1,8 +1,8 @@
 export const environment = {
   /**
    * Base URL of the backend API for production.
-   * Uses /Tickly/api which works with Apache routing from same origin.
-   * The .htaccess file routes /Tickly/api/* requests to Server/public/index.php
+   * For Heroku deployment, using relative path '/api'.
+   * If backend is on a different domain, update this to the full URL (e.g., 'https://your-backend.herokuapp.com/api').
    */
-  API_BASE: '/Tickly/api'
+  API_BASE: '/api'
 };

@@ -32,7 +32,7 @@
           },
           "configurations": {
             "production": {
-              "baseHref": "/Tickly/",
+              "baseHref": "/",
               "fileReplacements": [
                 {
                   "replace": "src/app/environment/environment.ts",
