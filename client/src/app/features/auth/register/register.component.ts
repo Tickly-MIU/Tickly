@@ -61,8 +61,10 @@ export class RegisterComponent {
     }
     const values = this.registerForm.value;
     this.register(values as UserSignUp);
+    this.register(values as UserSignUp);
   }
 
+  get full_name() { return this.registerForm.get('full_name'); }
   get full_name() { return this.registerForm.get('full_name'); }
   get email() { return this.registerForm.get('email'); }
   get password() { return this.registerForm.get('password'); }

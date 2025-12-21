@@ -36,16 +36,21 @@
                     
                 
                     <div class="relative z-0 w-full mb-5 group">
-                        <input formControlName="password" type="password" name="floating_password" id="floating_password" [class.!border-b-red-500]="password?.errors && password?.touched" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-mainHv peer" placeholder=" "/>
-                        <label for="floating_password" [class.!text-red-500]="password?.errors && password?.touched" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-left peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-main peer-focus:dark:text-main peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Password</label>
+                        <input formControlName="password" type="password" name="password" id="password" [class.!border-b-red-500]="password?.errors && password?.touched" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-mainHv peer" placeholder=" "/>
+                        <label for="password" [class.!text-red-500]="password?.errors && password?.touched" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-left peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-main peer-focus:dark:text-main peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Password</label>
                     </div>
                     @if (password?.errors && password?.touched) {
                         <div class="flex items-center p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50" #InvalidInput role="alert">
-                            @if (password?.getError('required')) {
+                            @if (password?.hasError('required')) {
                                 <p>Password is Required</p>
                             }
-                            @if (password?.getError('pattern')) {
-                                <p>Invalid Password</p>
+                            @if (password?.hasError('pattern')) {
+                                <ul class="list-disc list-inside">
+                                    <li>At least 1 Capital Letter</li>
+                                    <li>At least 1 Number</li>
+                                    <li>At least 1 Special Character</li>
+                                    <li>Minimum Length is 8 Characters</li>
+                                </ul>
                             }
                         </div>
                     }
