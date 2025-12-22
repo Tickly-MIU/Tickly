@@ -1,288 +1,164 @@
-<div class="bg-gray-50 min-h-screen">
-    <div class="container mx-auto px-4 py-6">
-        <!-- Header -->
-        <header class="mb-8 flex justify-between items-center">
-            <h1 class="text-3xl font-bold text-gray-800">Tickly</h1>
-            <div class="flex items-center space-x-4">
-                <a routerLink="/profile" class="relative">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer hover:scale-105 transition-transform">
-                        {{ getInitials(userName) }}
-                    </div>
-                </a>
-                <button 
-                    (click)="logout()" 
-                    class="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors shadow-sm flex items-center gap-2">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
+ 
+ <section class="m-5 relative">
+     <div class="flex items-center bg-violet-800 justify-center w-3/4 p-4 rounded-2xl mx-auto">
+            <h1 class="text-2xl font-bold lg:text-9xl">Home</h1>
+        </div>
+
+        <h3 class="text-3xl font-bold m-4">Your Tasks</h3>
+<div class="p-5 bg-gray-50 min-h-[300px] rounded-2xl grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 gap-5">
+    @for (task of Tasks(); track task.task_id) {
+        @if(task.status==='pending') {
+    <div class="relative">
+        <!-- Gray cover and undo button when finishing -->
+        @if(finishingTaskId === task.task_id) {
+        <div class="absolute rounded-xl z-20 bg-gray opacity-80 w-full h-full flex flex-col items-center justify-center ">
+            <div class="rounded-[50%] p-4 border-3 border-violet-800 flex justify-center items-center  w-15 aspect-[1] mb-4">
+                <i class="fa-solid fa-check text-2xl text-violet-800"></i>
+            </div>
+            <button (click)="undoFinishTask()" class="mt-2 px-4 py-2 bg-white text-violet-800 rounded shadow hover:bg-gray-200 font-bold">Undo</button>
+        </div>
+        }
+        <div  class="bg-neutral-primary-soft block w-full border h-[280px] border-default rounded-base shadow-xs relative">
+            <div>
+                <button (click)="openDeleteModal(task)" class="absolute top-3 right-3 text-red-800 hover:text-red-950">
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
-        </header>
+            <div class="p-6 text-center flex flex-col justify-between h-full">
+                <span [class.!border-red-800]="task.priority === 'high'" 
+                      [class.!border-yellow-800]="task.priority === 'medium'" 
+                      [class.!bg-red-50]="task.priority === 'high'" 
+                      [class.!bg-yellow-50]="task.priority === 'medium'" 
+                      [class.!text-red-950]="task.priority === 'high'" 
+                      [class.!text-yellow-950]="task.priority === 'medium'" 
+                class="self-center inline-flex items-center bg-violet-50 border border-violet-800 text-violet-950 text-xs font-medium px-1.5 py-0.5 rounded-sm">
+                   <i class="fa-solid fa-layer-group mx-1"></i>
+                    {{task.priority}}
+                </span>
 
-        @if (loading) {
-            <div class="text-center py-12">
-                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-violet-800"></div>
-                <p class="mt-4 text-gray-600">Loading tasks...</p>
-                <p class="mt-2 text-sm text-gray-500">Please wait...</p>
-            </div>
-        }
-
-        @if (error && !loading) {
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="font-semibold">⚠️ Error loading tasks</p>
-                        <p class="text-sm mt-1">{{ error }}</p>
-                        <p class="text-xs mt-2 text-red-600">Check browser console (F12) for more details</p>
-                    </div>
-                    <button (click)="loadTasks()" class="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors whitespace-nowrap">
-                        Retry
+                <h5 (click)="openModal(task);" class="cursor-pointer text-2xl font-semibold tracking-tight text-heading md:line-clamp-1"><i class="fa-solid fa-pen"></i> {{task.title}}</h5>
+                <h5 class=" text-md font-semibold tracking-tight text-gray-400 md:line-clamp-1">
+                    @if(task.description){
+                        {{task.description}}
+                    }@else {
+                        No Description
+                    }
+                </h5>
+                
+                @if (task.status === 'pending') {
+                    <button (click)="finishTask(task)" [disabled]="finishingTaskId === task.task_id" class="transition duration-200 inline-flex justify-center items-center text-white bg-violet-800 box-border border border-transparent hover:bg-violet-950 focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
+                        Finish Task
+                        <i class="fa-solid fa-check ml-2"></i>
                     </button>
-                </div>
+                    <span [class.!text-red-800]="isExpired(task.deadline)" class="my-2 text-sm font-bold block text-gray-500">
+                      Deadline: @if(task.deadline){
+                         {{task.deadline}}
+                        }@else {
+                            Doesn't Have
+                        }
+                    </span>
+                }
             </div>
-        }
 
-        @if (!loading && !error) {
-            <div class="flex flex-col lg:flex-row gap-6">
-                <!-- Sidebar -->
-                <div class="lg:w-1/4">
-                    <div class="sidebar rounded-2xl p-6 text-white mb-6">
-                        <h2 class="text-xl font-bold mb-6 flex items-center">
-                            <i class="fas fa-tasks mr-3"></i>
-                            <span>Task Manager</span>
-                        </h2>
-                        
-                        <div class="mb-8">
-                            <h3 class="text-sm uppercase tracking-wider opacity-80 mb-4">Workspace</h3>
-                            <ul>
-                                <li class="sidebar-item p-3 flex items-center cursor-pointer">
-                                    <i class="fas fa-inbox mr-3"></i>
-                                    <span>Inbox</span>
-                                    <span class="ml-auto bg-white bg-opacity-20 text-xs px-2 py-1 rounded-full">{{ tasks.length }}</span>
-                                </li>
-                                <li class="sidebar-item p-3 flex items-center cursor-pointer">
-                                    <i class="fas fa-user-circle mr-3"></i>
-                                    <span>My Tasks</span>
-                                </li>
-                                <li class="sidebar-item p-3 flex items-center cursor-pointer">
-                                    <i class="fas fa-archive mr-3"></i>
-                                    <span>Archive</span>
-                                </li>
-                            </ul>
-                        </div>
-                        
-                        <div>
-                            <h3 class="text-sm uppercase tracking-wider opacity-80 mb-4">Tools</h3>
-                            <ul>
-                                <li class="sidebar-item p-3 flex items-center cursor-pointer">
-                                    <i class="fas fa-file-import mr-3"></i>
-                                    <span>Import Tasks</span>
-                                </li>
-                                <li class="sidebar-item p-3 flex items-center cursor-pointer">
-                                    <i class="fas fa-user-plus mr-3"></i>
-                                    <span>Invite People</span>
-                                </li>
-                                <li class="sidebar-item p-3 flex items-center cursor-pointer">
-                                    <i class="fab fa-github mr-3"></i>
-                                    <span>Link GitHub</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-2xl shadow p-6">
-                        <h3 class="font-semibold text-gray-700 mb-4">Activity</h3>
-                        <div class="space-y-4">
-                            <div class="flex items-start">
-                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
-                                    <i class="fas fa-check text-xs"></i>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-700">Total Tasks: <span class="font-medium">{{ tasks.length }}</span></p>
-                                    <p class="text-xs text-gray-500">Last updated: Just now</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        </div>
+    </div>
+    }
+    }
+</div>
 
-                <!-- Main Content -->
-                <div class="lg:w-3/4">
-                    <div class="flex justify-between items-center mb-6">
-                        <div class="flex space-x-4">
-                            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium flex items-center shadow-md">
-                                <i class="fas fa-list mr-2"></i>
-                                Board
-                            </button>
-                            <button class="px-4 py-2 bg-white text-gray-700 rounded-lg font-medium border flex items-center shadow-sm">
-                                <i class="fas fa-stream mr-2"></i>
-                                Timeline
-                            </button>
-                        </div>
-                        <div class="flex space-x-3">
-                            <button class="px-4 py-2 bg-white text-gray-700 rounded-lg font-medium border flex items-center shadow-sm">
-                                <i class="fas fa-filter mr-2"></i>
-                                Filter
-                            </button>
-                            <button class="px-4 py-2 bg-white text-gray-700 rounded-lg font-medium border flex items-center shadow-sm">
-                                <i class="fas fa-sort mr-2"></i>
-                                Sort
-                            </button>
-                        </div>
-                    </div>
+    <button (click)="openModal()" class="active:scale-[0.8] rounded-[50%] bg-violet-800 text-white w-15 aspect-[1] fixed bottom-10 right-10 text-3xl shadow-lg hover:bg-violet-950 transition duration-200">
+        <span>+</span>
+    </button>
+ </section>
 
-                    @if (tasks.length === 0 && !loading) {
-                        <!-- Empty State: No Tasks -->
-                        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
-                            <div class="max-w-md mx-auto">
-                                <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-violet-100 to-blue-100 flex items-center justify-center animate-pulse">
-                                    <i class="fas fa-tasks text-4xl text-violet-600"></i>
-                                </div>
-                                <h3 class="text-2xl font-bold text-gray-800 mb-2">Welcome to Tickly!</h3>
-                                <p class="text-gray-600 mb-2">You don't have any tasks yet.</p>
-                                <p class="text-sm text-gray-500 mb-6">Get started by creating your first task and organize your work!</p>
-                                <button 
-                                    (click)="createFirstTask()" 
-                                    class="px-6 py-3 bg-violet-800 text-white rounded-lg font-medium hover:bg-violet-900 transition-colors shadow-md flex items-center justify-center mx-auto gap-2 mb-4">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Create Your First Task</span>
-                                </button>
-                                <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
-                                    <i class="fas fa-info-circle"></i>
-                                    <span>You can also use the floating + button</span>
-                                </div>
-                            </div>
-                        </div>
-                    }
-
-                    @if (tasks.length > 0 || loading) {
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- In-Progress Column (shows tasks with status='pending') -->
-                        <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-100">
-                            <div class="category-header p-4 rounded-t-2xl flex justify-between items-center" style="border-color: var(--todo-color); background-color: rgba(59, 130, 246, 0.05);">
-                                <div class="flex items-center">
-                                    <h3 class="font-semibold text-gray-700 text-lg mr-2">In-Progress</h3>
-                                    <span class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded-full" #countElement>{{ todoTasks.length }}</span>
-                                </div>
-                                <div class="relative">
-                                    <i class="fas fa-palette text-gray-500 cursor-pointer color-trigger" data-target="todo"></i>
-                                    <div class="color-picker" id="color-picker-todo">
-                                        <div class="color-option bg-blue-500" data-color="#3b82f6"></div>
-                                        <div class="color-option bg-red-500" data-color="#ef4444"></div>
-                                        <div class="color-option bg-green-500" data-color="#10b981"></div>
-                                        <div class="color-option bg-yellow-500" data-color="#f59e0b"></div>
-                                        <div class="color-option bg-purple-500" data-color="#8b5cf6"></div>
-                                        <div class="color-option bg-pink-500" data-color="#ec4899"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div #todoColumn id="todo-column" class="p-4 min-h-[200px] space-y-4">
-                                @for (task of todoTasks; track task.task_id) {
-                                    <div class="task-card bg-white rounded-xl shadow p-4 cursor-move" style="border-left-color: var(--todo-color);">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <h4 class="font-medium text-gray-800">{{ task.title }}</h4>
-                                            <div class="flex items-center space-x-2">
-                                                <button (click)="updateTaskStatus(task, 'completed')" class="text-gray-400 hover:text-green-600" title="Mark as Done">
-                                                    <i class="fas fa-check text-xs"></i>
-                                                </button>
-                                                <button (click)="deleteTask(task.task_id)" class="text-gray-400 hover:text-red-600" title="Delete">
-                                                    <i class="fas fa-trash text-xs"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        @if (task.description) {
-                                            <p class="text-sm text-gray-600 mb-2">{{ task.description }}</p>
-                                        }
-                                        <div class="flex flex-wrap gap-2 mb-3">
-                                            <span [class]="'text-xs px-2 py-1 rounded-full ' + getPriorityColor(task.priority)">
-                                                {{ task.priority }}
-                                            </span>
-                                        </div>
-                                        @if (task.deadline) {
-                                            <div class="flex justify-between items-center text-sm text-gray-500">
-                                                <span>{{ formatDate(task.deadline) }}</span>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                                @if (todoTasks.length === 0 && !loading && tasks.length > 0) {
-                                    <div class="text-center text-gray-400 py-8">
-                                        <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
-                                            <i class="fas fa-inbox text-2xl"></i>
-                                        </div>
-                                        <p class="text-sm font-medium">No pending tasks</p>
-                                        <p class="text-xs mt-1 text-gray-500">All tasks are completed!</p>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-
-                        <!-- Done Column -->
-                        <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-100">
-                            <div class="category-header p-4 rounded-t-2xl flex justify-between items-center" style="border-color: var(--done-color); background-color: rgba(16, 185, 129, 0.05);">
-                                <div class="flex items-center">
-                                    <h3 class="font-semibold text-gray-700 text-lg mr-2">Done</h3>
-                                    <span class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded-full" #countElement>{{ doneTasks.length }}</span>
-                                </div>
-                                <div class="relative">
-                                    <i class="fas fa-palette text-gray-500 cursor-pointer color-trigger" data-target="done"></i>
-                                    <div class="color-picker" id="color-picker-done">
-                                        <div class="color-option bg-blue-500" data-color="#3b82f6"></div>
-                                        <div class="color-option bg-red-500" data-color="#ef4444"></div>
-                                        <div class="color-option bg-green-500" data-color="#10b981"></div>
-                                        <div class="color-option bg-yellow-500" data-color="#f59e0b"></div>
-                                        <div class="color-option bg-purple-500" data-color="#8b5cf6"></div>
-                                        <div class="color-option bg-pink-500" data-color="#ec4899"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div #doneColumn id="done-column" class="p-4 min-h-[200px] space-y-4">
-                                @for (task of doneTasks; track task.task_id) {
-                                    <div class="task-card bg-white rounded-xl shadow p-4 cursor-move opacity-75" style="border-left-color: var(--done-color);">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <h4 class="font-medium text-gray-800 line-through">{{ task.title }}</h4>
-                                            <div class="flex items-center space-x-2">
-                                                <button (click)="updateTaskStatus(task, 'pending')" class="text-gray-400 hover:text-blue-600" title="Reopen">
-                                                    <i class="fas fa-undo text-xs"></i>
-                                                </button>
-                                                <button (click)="deleteTask(task.task_id)" class="text-gray-400 hover:text-red-600" title="Delete">
-                                                    <i class="fas fa-trash text-xs"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        @if (task.description) {
-                                            <p class="text-sm text-gray-600 mb-2">{{ task.description }}</p>
-                                        }
-                                        <div class="flex flex-wrap gap-2 mb-3">
-                                            <span [class]="'text-xs px-2 py-1 rounded-full ' + getPriorityColor(task.priority)">
-                                                {{ task.priority }}
-                                            </span>
-                                        </div>
-                                        @if (task.deadline) {
-                                            <div class="flex justify-between items-center text-sm text-gray-500">
-                                                <span>{{ formatDate(task.deadline) }}</span>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                                @if (doneTasks.length === 0 && !loading && tasks.length > 0) {
-                                    <div class="text-center text-gray-400 py-8">
-                                        <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
-                                            <i class="fas fa-check-circle text-2xl"></i>
-                                        </div>
-                                        <p class="text-sm font-medium">No completed tasks</p>
-                                        <p class="text-xs mt-1 text-gray-500">Complete tasks to see them here</p>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                    }
-                </div>
+ @if(showModal()) {
+ <div id="task-modal" tabindex="-1" aria-hidden="true" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-full bg-black/50 flex">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+        <!-- Modal content -->
+        <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
+            <!-- Modal header -->
+            <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                <h3 class="text-lg font-medium text-heading">
+                    {{selectedTask?selectedTask.status:"Create New Task"}}
+                </h3>
+                <button (click)="closeModal()" type="button" class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center" data-modal-hide="crud-modal">
+                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6"/></svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
             </div>
-        }
-
-        <div class="floating-add-btn" title="Add New Task">
-            <i class="fas fa-plus"></i>
+            <!-- Modal body -->
+            <form [formGroup]="TaskForm" (ngSubmit)="handleSubmit()">
+                <div class="grid gap-4 grid-cols-2 py-4 md:py-6">
+                    <div class="col-span-2">
+                        <label for="title" class="block mb-2.5 text-sm font-medium text-heading">Title</label>
+                        <input formControlName="title" type="text" name="title" id="title" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-violet-800 focus:border-violet-800 block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Task Title">
+                    </div>
+                    <div class="col-span-2 sm:col-span-1">
+                        <label for="deadline" class="block mb-2.5 text-sm font-medium text-heading">Deadline</label>
+                        <input formControlName="deadline" type="datetime-local" name="deadline" id="deadline" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-violet-800 focus:border-violet-800 block w-full px-3 py-2.5 shadow-xs placeholder:text-body" >
+                    </div>
+                    <div class="col-span-2 sm:col-span-1">
+                        <label for="priority" class="block mb-2.5 text-sm font-medium text-heading">Priority</label>
+                        <select formControlName="priority" id="priority" class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-violet-800 focus:border-violet-800 px-3 py-2.5 shadow-xs placeholder:text-body">
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label for="description" class="block mb-2.5 text-sm font-medium text-heading">Product Description</label>
+                        <textarea formControlName="description" id="description" rows="4" class="min-h-[100px] bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-violet-800 focus:border-violet-800 block w-full p-3.5 shadow-xs placeholder:text-body" placeholder="Write task description here"></textarea>                    
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4 border-t border-default pt-4 md:pt-6">
+                    <button [class.!bg-gray]="loading()" [disabled]="TaskForm.invalid" type="submit" [class.pointer-events-none]="loading()" [disabled]="loading()" (click)="selectedTask?UpdateTask():CreateTask()" class="inline-flex items-center  text-white bg-violet-800 hover:bg-violet-950 transition duration-200 shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 active:scale-[0.8]">
+                        @if (loading()) {
+                            loading <i class="fa-spinner fa-solid fa-spin ms-2"></i>
+                        } @else {
+                            {{selectedTask?'Update Task':'Create Task'}}
+                        }
+                    </button>
+                    <button data-modal-hide="crud-modal" type="button" class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+ }
+
+ @if(modalDel()) {
+ <div id="delete-modal" tabindex="-1" aria-hidden="true" class="overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-full bg-black/50 flex">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+        <!-- Modal content -->
+        <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
+            <!-- Modal header -->
+            <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                <h3 class="text-lg font-medium text-heading">
+                    Delete Task
+                </h3>
+                <button (click)="closeDel()" type="button" class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center" data-modal-hide="delete-modal">
+                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6"/></svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
+            <!-- Modal body -->
+            <div class="p-6 text-center">
+                <i class="fa-solid fa-triangle-exclamation text-6xl text-red-800 mb-4"></i>
+                <h3 class="mb-5 text-lg font-normal text-body">Are you sure you want to delete this task?</h3>
+                <button (click)="deleteTask()" [class.!bg-gray]="loading()" [disabled]="loading()" type="button" class="text-white bg-red-800 hover:bg-red-950 focus:ring-4 focus:ring-red-300 font-medium rounded-base text-sm inline-flex items-center px-5 py-2.5 text-center mr-2">
+                    @if (loading()) {
+                        Deleting <i class="fa-spinner fa-solid fa-spin ms-2"></i>
+                    } @else {
+                        Yes, I'm sure
+                    }
+                </button>
+                <button (click)="closeDel()" type="button" class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">No, cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+ }
+
+ 
+
+ 
