@@ -1,8 +1,5 @@
 <?php
 
-use Controllers\CategoryController;
-use Models\Category;
-
 class CategoryControllerTest extends BaseTestCase
 {
     private $categoryController;
@@ -14,49 +11,101 @@ class CategoryControllerTest extends BaseTestCase
 
         $this->mockCategoryModel = $this->createMock(Category::class);
         $this->categoryController = new CategoryController();
+
+        // Use reflection to inject the mock
+        $reflection = new ReflectionClass($this->categoryController);
+        $property = $reflection->getProperty('categoryModel');
+        $property->setAccessible(true);
+        $property->setValue($this->categoryController, $this->mockCategoryModel);
     }
 
     public function testGetAllCategories()
     {
-        // Arrange
         $categories = [
             ['id' => 1, 'name' => 'Work', 'user_id' => 1],
             ['id' => 2, 'name' => 'Personal', 'user_id' => 1]
         ];
 
         $this->mockCategoryModel->expects($this->once())
-            ->method('findAll')
+            ->method('getAll')
             ->willReturn($categories);
 
-        // Act
-        // $result = $this->categoryController->index();
+        ob_start();
+        $this->categoryController->read([]);
+        $output = ob_get_clean();
 
-        // Assert
-        // $this->assertEquals(200, $result['status']);
-        // $this->assertEquals($categories, $result['data']);
-        $this->assertTrue(true); // Placeholder assertion
+        $response = json_decode($output, true);
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertEquals($categories, $response['data']);
     }
 
     public function testCreateCategory()
     {
-        // Test creating a new category
         $categoryData = [
-            'name' => 'New Category',
+            'category_name' => 'New Category',
             'user_id' => 1
         ];
 
-        $this->assertTrue(true); // Placeholder assertion
+        $this->mockCategoryModel->expects($this->once())
+            ->method('create')
+            ->with($this->callback(function($data) {
+                return $data['category_name'] === 'New Category' && $data['user_id'] == 1;
+            }))
+            ->willReturn(true);
+
+        ob_start();
+        $this->categoryController->create($categoryData);
+        $output = ob_get_clean();
+
+        $response = json_decode($output, true);
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertEquals('Category created successfully', $response['message']);
     }
 
     public function testUpdateCategory()
     {
-        // Test updating an existing category
-        $this->assertTrue(true); // Placeholder assertion
+        $categoryData = [
+            'category_id' => 1,
+            'category_name' => 'Updated Category'
+        ];
+
+        $this->mockCategoryModel->expects($this->once())
+            ->method('update')
+            ->with($this->callback(function($data) {
+                return $data['category_name'] === 'Updated Category' && $data['category_id'] == 1;
+            }))
+            ->willReturn(true);
+
+        ob_start();
+        $this->categoryController->update($categoryData);
+        $output = ob_get_clean();
+
+        $response = json_decode($output, true);
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertEquals('Category updated successfully', $response['message']);
     }
 
     public function testDeleteCategory()
     {
-        // Test deleting a category
-        $this->assertTrue(true); // Placeholder assertion
+        $categoryData = ['category_id' => 1];
+
+        $this->mockCategoryModel->expects($this->once())
+            ->method('delete')
+            ->with($this->callback(function($data) {
+                return $data['category_id'] == 1;
+            }))
+            ->willReturn(true);
+
+        ob_start();
+        $this->categoryController->delete($categoryData);
+        $output = ob_get_clean();
+
+        $response = json_decode($output, true);
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertEquals('Category deleted successfully', $response['message']);
     }
 }
