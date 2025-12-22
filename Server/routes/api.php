@@ -14,3 +14,5 @@ $router->get('/api/logout', 'AuthController@logout');
 $router->get('/api/profile', 'UsersController@profile');
 $router->get('/api/session-check', 'UsersController@sessionCheck');
 $router->get('/api/tasks', 'TasksController@read');
+$router->post('/api/forgot-password', 'PasswordResetController@requestReset');
+$router->post('/api/reset-password', 'PasswordResetController@resetPassword');
