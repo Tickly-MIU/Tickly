@@ -1,5 +1,5 @@
 import { Component, ElementRef, ViewChild, inject } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserSignUp } from '../../../core/models/user.interface';
@@ -19,6 +19,38 @@ export class RegisterComponent {
   message = '';
   isSuccess = false;
 
+  // Custom password validator
+  passwordValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (!value) {
+      return null;
+    }
+
+    const errors: any = {};
+
+    // Check minimum length
+    if (value.length < 8) {
+      errors.minLength = true;
+    }
+
+    // Check for at least 1 capital letter
+    if (!/[A-Z]/.test(value)) {
+      errors.noCapital = true;
+    }
+
+    // Check for at least 1 number
+    if (!/[0-9]/.test(value)) {
+      errors.noNumber = true;
+    }
+
+    // Check for at least 1 special character
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(value)) {
+      errors.noSpecial = true;
+    }
+
+    return Object.keys(errors).length > 0 ? errors : null;
+  }
+
   registerForm = new FormGroup({
     full_name: new FormControl('', [
       Validators.required,
@@ -31,8 +63,7 @@ export class RegisterComponent {
     ]),
     password: new FormControl('', [
       Validators.required,
-      Validators.minLength(6),
-      Validators.pattern(/^[A-Z][a-z0-9]{5,10}$/)
+      this.passwordValidator.bind(this)
     ]),
   });
 

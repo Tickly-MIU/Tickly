@@ -1,4 +1,4 @@
-import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Component, inject, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../../../Client/src/app/api.service';
@@ -19,6 +19,38 @@ export class ResetPasswordComponent implements OnInit {
 
   completed: boolean[] = []
 
+  // Custom password validator
+  passwordValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (!value) {
+      return null;
+    }
+
+    const errors: any = {};
+
+    // Check minimum length
+    if (value.length < 8) {
+      errors.minLength = true;
+    }
+
+    // Check for at least 1 capital letter
+    if (!/[A-Z]/.test(value)) {
+      errors.noCapital = true;
+    }
+
+    // Check for at least 1 number
+    if (!/[0-9]/.test(value)) {
+      errors.noNumber = true;
+    }
+
+    // Check for at least 1 special character
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(value)) {
+      errors.noSpecial = true;
+    }
+
+    return Object.keys(errors).length > 0 ? errors : null;
+  }
+
   forgetPasswordGroup = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email])
   });
@@ -26,7 +58,7 @@ export class ResetPasswordComponent implements OnInit {
   resetPasswordGroup = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email]),
     token: new FormControl('', [Validators.required]),
-    newPassword: new FormControl('', [Validators.required, Validators.pattern(/^[A-Z][a-z0-9]{5,10}$/)]),
+    newPassword: new FormControl('', [Validators.required, this.passwordValidator.bind(this)]),
     rePassword: new FormControl('', [Validators.required])
   }, { validators: this.matchPassword });
 
@@ -70,7 +102,7 @@ export class ResetPasswordComponent implements OnInit {
           alert(response.message || 'Failed to send reset link');
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         this.loading = false;
         alert(error.error?.message || 'Failed to send reset link. Please try again.');
       }
@@ -101,7 +133,7 @@ export class ResetPasswordComponent implements OnInit {
           alert(response.message || 'Failed to reset password');
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         this.loading = false;
         alert(error.error?.message || 'Failed to reset password. The link may have expired.');
       }

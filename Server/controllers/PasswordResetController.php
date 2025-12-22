@@ -73,12 +73,25 @@ class PasswordResetController extends Controller
             return Response::json(false, 'Token has expired', [], 400);
         }
 
-        // Validate password strength (reuse logic from AuthController or similar)
-        if (strlen($newPassword) < 6) {
-            return Response::json(false, 'Password must be at least 6 characters');
+        // Validate password strength (matches AuthController):
+        // - At least 1 Capital letter
+        // - At least 1 Number
+        // - At least 1 Special Character
+        // - Minimum 8 Characters
+        if (strlen($newPassword) < 8) {
+            return Response::json(false, 'Password must be at least 8 characters');
         }
-        if (!preg_match('/^[A-Z][a-z0-9]{5,10}$/', $newPassword)) {
-           return Response::json(false, 'Password must start with an uppercase letter and contain 6-11 alphanumeric characters');
+        // Check for at least 1 capital letter
+        if (!preg_match('/[A-Z]/', $newPassword)) {
+            return Response::json(false, 'Password must contain at least 1 capital letter');
+        }
+        // Check for at least 1 number
+        if (!preg_match('/[0-9]/', $newPassword)) {
+            return Response::json(false, 'Password must contain at least 1 number');
+        }
+        // Check for at least 1 special character
+        if (!preg_match('/[!@#$%^&*()_+\-=\[\]{};\'":\\|,.<>\/?~`]/', $newPassword)) {
+            return Response::json(false, 'Password must contain at least 1 special character');
         }
 
         // Hash new password

@@ -42,16 +42,25 @@
                         <label for="floating_password" [class.!text-red-500]="password?.errors && password?.touched" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-left peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-main peer-focus:dark:text-main peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Password</label>
                     </div>
                     @if (password?.errors && password?.touched) {
-                        <div class="flex items-center p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50" #InvalidInput role="alert">
-                            @if (password?.getError('required')) {
-                                <p>Password is required</p>
-                            }
-                            @if (password?.getError('minlength')) {
-                                <p>Password must be at least 6 characters</p>
-                            }
-                            @if (password?.getError('pattern')) {
-                                <p>Password must start with an uppercase letter and contain 6-11 alphanumeric characters</p>
-                            }
+                        <div class="flex flex-col p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50" #InvalidInput role="alert">
+                            <p class="font-semibold mb-2">Password must contain:</p>
+                            <ul class="list-disc list-inside space-y-1">
+                                @if (password?.getError('required')) {
+                                    <li>Password is required</li>
+                                }
+                                @if (password?.getError('minLength')) {
+                                    <li>Minimum 8 characters</li>
+                                }
+                                @if (password?.getError('noCapital')) {
+                                    <li>At least 1 capital letter</li>
+                                }
+                                @if (password?.getError('noNumber')) {
+                                    <li>At least 1 number</li>
+                                }
+                                @if (password?.getError('noSpecial')) {
+                                    <li>At least 1 special character</li>
+                                }
+                            </ul>
                         </div>
                     }
                     

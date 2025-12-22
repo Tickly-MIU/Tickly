@@ -31,14 +31,26 @@ class AuthController extends Controller
             return Response::json(false, 'Invalid email format');
         }
 
-        // Validate password (matches frontend: required, minLength 6, pattern /^[A-Z][a-z0-9]{5,10}$/)
+        // Validate password:
+        // - At least 1 Capital letter
+        // - At least 1 Number
+        // - At least 1 Special Character
+        // - Minimum 8 Characters
         $password = trim($data['password']);
-        if (strlen($password) < 6) {
-            return Response::json(false, 'Password must be at least 6 characters');
+        if (strlen($password) < 8) {
+            return Response::json(false, 'Password must be at least 8 characters');
         }
-        // Pattern: Must start with uppercase letter, followed by 5-10 lowercase letters or digits (total 6-11 chars)
-        if (!preg_match('/^[A-Z][a-z0-9]{5,10}$/', $password)) {
-            return Response::json(false, 'Password must start with an uppercase letter and contain 6-11 alphanumeric characters');
+        // Check for at least 1 capital letter
+        if (!preg_match('/[A-Z]/', $password)) {
+            return Response::json(false, 'Password must contain at least 1 capital letter');
+        }
+        // Check for at least 1 number
+        if (!preg_match('/[0-9]/', $password)) {
+            return Response::json(false, 'Password must contain at least 1 number');
+        }
+        // Check for at least 1 special character
+        if (!preg_match('/[!@#$%^&*()_+\-=\[\]{};\'":\\|,.<>\/?~`]/', $password)) {
+            return Response::json(false, 'Password must contain at least 1 special character');
         }
 
         if ($this->userModel->exists($data['email'])) {
