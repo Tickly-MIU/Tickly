@@ -16,7 +16,7 @@ export class HomeComponent implements OnInit {
   AuthService=inject(AuthService);
   TaskService=inject(TaskService);
   ngOnInit() {
-    this.checkSession();
+    // this.checkSession();
     this.loadTasks();
   }
   sessionValid: boolean = false;
