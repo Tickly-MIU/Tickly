@@ -10,7 +10,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist/tickly/browser/index.html'));
 });
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 4200;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
