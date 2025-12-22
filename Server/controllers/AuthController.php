@@ -31,14 +31,26 @@ class AuthController extends Controller
             return Response::json(false, 'Invalid email format');
         }
 
-        // Validate password (matches frontend: required, minLength 6, pattern /^[A-Z][a-z0-9]{5,10}$/)
+        // Validate password:
+        // - At least 1 Capital letter
+        // - At least 1 Number
+        // - At least 1 Special Character
+        // - Minimum 8 Characters
         $password = trim($data['password']);
-        if (strlen($password) < 6) {
-            return Response::json(false, 'Password must be at least 6 characters');
+        if (strlen($password) < 8) {
+            return Response::json(false, 'Password must be at least 8 characters');
         }
-        // Pattern: Must start with uppercase letter, followed by 5-10 lowercase letters or digits (total 6-11 chars)
-        if (!preg_match('/^[A-Z][a-z0-9]{5,10}$/', $password)) {
-            return Response::json(false, 'Password must start with an uppercase letter and contain 6-11 alphanumeric characters');
+        // Check for at least 1 capital letter
+        if (!preg_match('/[A-Z]/', $password)) {
+            return Response::json(false, 'Password must contain at least 1 capital letter');
+        }
+        // Check for at least 1 number
+        if (!preg_match('/[0-9]/', $password)) {
+            return Response::json(false, 'Password must contain at least 1 number');
+        }
+        // Check for at least 1 special character
+        if (!preg_match('/[!@#$%^&*()_+\-=\[\]{};\'":\\|,.<>\/?~`]/', $password)) {
+            return Response::json(false, 'Password must contain at least 1 special character');
         }
 
         if ($this->userModel->exists($data['email'])) {
@@ -63,43 +75,20 @@ class AuthController extends Controller
 
     public function login($data = [])
     {
-        // Debug logging
-        error_log("=== Login Debug ===");
-        error_log("Received data: " . print_r($data, true));
-        error_log("Email: " . (isset($data['email']) ? $data['email'] : 'NOT SET'));
-        error_log("Password: " . (isset($data['password']) ? '[REDACTED - length: ' . strlen($data['password']) . ']' : 'NOT SET'));
-        
         if (empty($data['email']) || empty($data['password'])) {
-            error_log("Missing email or password");
             return Response::json(false, 'Email and password required');
         }
 
         // Validate password (matches frontend: required, minLength 6)
         // Note: No pattern validation for login since we're verifying against hash
         $password = trim($data['password']);
-        $email = strtolower(trim($data['email'])); // Normalize email to lowercase
-        
         if (strlen($password) < 6) {
-            error_log("Password too short: " . strlen($password));
             return Response::json(false, 'Password must be at least 6 characters');
         }
 
-        error_log("Looking up user with email: " . $email);
-        $user = $this->userModel->getByEmail($email);
-        
-        if (!$user) {
-            error_log("User not found for email: " . $email);
-            return Response::json(false, 'Invalid email or password', [], 401);
-        }
-        
-        error_log("User found: " . $user['email']);
-        error_log("Password hash exists: " . (isset($user['password_hash']) ? 'YES' : 'NO'));
-        
-        $passwordVerified = password_verify($password, $user['password_hash']);
-        error_log("Password verification result: " . ($passwordVerified ? 'SUCCESS' : 'FAILED'));
-        
-        if (!$passwordVerified) {
-            error_log("Password verification failed");
+        $user = $this->userModel->getByEmail(trim($data['email']));
+
+        if (!$user || !password_verify($password, $user['password_hash'])) {
             return Response::json(false, 'Invalid email or password', [], 401);
         }
 
