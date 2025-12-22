@@ -39,8 +39,8 @@ this.loading.set(false);
           
           // Small delay before navigation for better UX
           setTimeout(() => {
-            console.log('Navigating to /home now');
-            this.router.navigate(['/home']);
+            console.log('Navigating to /tasks now');
+            this.router.navigate(['/tasks']);
           }, 500);
         } else {
           // Handle case where success is true but user data is missing
