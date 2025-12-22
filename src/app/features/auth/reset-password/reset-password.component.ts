@@ -1,8 +1,7 @@
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
-
-
+import { Component, inject, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { ApiService } from '../../../../Client/src/app/api.service';
 
 @Component({
   selector: 'app-reset-password',
@@ -10,25 +9,44 @@ import { Router } from '@angular/router';
   templateUrl: './reset-password.component.html',
   styleUrl: './reset-password.component.css'
 })
-export class ResetPasswordComponent {
-  router=inject(Router);
-  step=1;
+export class ResetPasswordComponent implements OnInit {
+  router = inject(Router);
+  route = inject(ActivatedRoute);
+  apiService = inject(ApiService);
+  step = 1;
+  token: string | null = null;
+  loading = false;
 
-  completed:boolean[]=[]
+  completed: boolean[] = []
 
-  forgetPasswordGroup=new FormGroup({
-    email:new FormControl('',[Validators.required,Validators.email])
+  forgetPasswordGroup = new FormGroup({
+    email: new FormControl('', [Validators.required, Validators.email])
   });
 
-  verifyResetCodeGroup=new FormGroup({
-    resetCode:new FormControl('',[Validators.required,Validators.pattern(/^[0-9]{6}$/)])
-  });
-
-  resetPasswordGroup=new FormGroup({
-    email:new FormControl('',[Validators.required,Validators.email]),
+  resetPasswordGroup = new FormGroup({
+    email: new FormControl('', [Validators.required, Validators.email]),
+    token: new FormControl('', [Validators.required]),
     newPassword: new FormControl('', [Validators.required, Validators.pattern(/^[A-Z][a-z0-9]{5,10}$/)]),
-    rePassword:new FormControl('',[Validators.required])
-  },{validators:this.matchPassword});
+    rePassword: new FormControl('', [Validators.required])
+  }, { validators: this.matchPassword });
+
+  ngOnInit() {
+    // Check for token and email in URL query params
+    this.route.queryParams.subscribe(params => {
+      const token = params['token'];
+      const email = params['email'];
+      
+      if (token && email) {
+        this.token = token;
+        this.resetPasswordGroup.patchValue({
+          email: email,
+          token: token
+        });
+        this.step = 2;
+        this.completed[0] = true;
+      }
+    });
+  }
 
   matchPassword(control: AbstractControl) {
     const password = control.get('newPassword')?.value;
@@ -36,70 +54,61 @@ export class ResetPasswordComponent {
     return password === rePassword ? null : { notMatching: true };
   }
 
-  handleForgetPassword(){
-    if(this.forgetPasswordGroup.invalid){
+  handleForgetPassword() {
+    if (this.forgetPasswordGroup.invalid) {
       this.forgetPasswordGroup.markAllAsTouched();
       return;
     }
-  //   this.loading=true;
-  //   this.AuthService.forgetPassword({email:this.forgetPasswordGroup.value.email!}).subscribe({
-  //     next:(response)=>{
-  //       this.ToastrService.info("Verification Code Sent to your Email");
-  //       this.loading=false;
-    this.step=2;
-    this.completed[0]=true;
-  // },
-  //     error:(error)=>{
-  //       this.loading=false;
-  //       this.ToastrService.error(error.error.message);
-  //     }
-  //   })
+    
+    this.loading = true;
+    this.apiService.requestReset({ email: this.forgetPasswordGroup.value.email! }).subscribe({
+      next: (response: any) => {
+        this.loading = false;
+        if (response.success) {
+          alert('Password reset link has been sent to your email');
+        } else {
+          alert(response.message || 'Failed to send reset link');
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        alert(error.error?.message || 'Failed to send reset link. Please try again.');
+      }
+    });
   }
 
-  handleVerifyResetCode(){
-    if(this.verifyResetCodeGroup.invalid){
-      this.verifyResetCodeGroup.markAllAsTouched();
-      return;
-    }
-  //   this.loading=true;
-  //   this.AuthService.verifyResetCode({resetCode:this.verifyResetCodeGroup.value.resetCode!}).subscribe({
-  //     next:(response)=>{
-  //       this.ToastrService.success("Code Verified Successfully");
-  //       this.loading=false;
-  //   this.resetPasswordGroup.patchValue({email:this.forgetPasswordGroup.value.email});
-  this.step=3;
-  this.completed[1]=true;
-  // },
-  //     error:(error)=>{
-  //       this.loading=false;
-  //       this.ToastrService.error(error.error.message);
-  //     }
-  //   })
-  }
-
-  handleResetPassword(){
-    if(this.resetPasswordGroup.invalid){
+  handleResetPassword() {
+    if (this.resetPasswordGroup.invalid) {
       this.resetPasswordGroup.markAllAsTouched();
       return;
     }
-    // this.loading=true;
-    // this.AuthService.resetPassword({email:this.resetPasswordGroup.value.email!,newPassword:this.resetPasswordGroup.value.newPassword!}).subscribe({
-    //   next:(response)=>{
-    this.forgetPasswordGroup.reset();
-    this.verifyResetCodeGroup.reset();
-    this.resetPasswordGroup.reset();
-    this.router.navigate(['/login']);
-    }
-    // ,
-  //     error:(error)=>{
-  //       this.loading=false;
-  //       this.ToastrService.error(error.error.message);
-  //     }
-  //   })
-  // }
+    
+    this.loading = true;
+    const formValue = this.resetPasswordGroup.value;
+    this.apiService.resetPassword({
+      email: formValue.email!,
+      token: formValue.token!,
+      new_password: formValue.newPassword!
+    }).subscribe({
+      next: (response: any) => {
+        this.loading = false;
+        if (response.success) {
+          alert('Password has been successfully reset');
+          this.forgetPasswordGroup.reset();
+          this.resetPasswordGroup.reset();
+          this.router.navigate(['/login']);
+        } else {
+          alert(response.message || 'Failed to reset password');
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        alert(error.error?.message || 'Failed to reset password. The link may have expired.');
+      }
+    });
+  }
 
   get email() { return this.forgetPasswordGroup.get('email'); }
-  get resetCode() { return this.verifyResetCodeGroup.get('resetCode'); }
   get emailR() { return this.resetPasswordGroup.get('email'); } 
   get newPassword() { return this.resetPasswordGroup.get('newPassword'); }
   get rePassword() { return this.resetPasswordGroup.get('rePassword'); }
