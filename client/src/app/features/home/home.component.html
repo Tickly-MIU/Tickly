@@ -1,19 +1,29 @@
  
- <section class="m-5">
+ <section class="m-5 relative">
      <div class="flex items-center bg-violet-800 justify-center w-3/4 p-4 rounded-2xl mx-auto">
             <h1 class="text-2xl font-bold lg:text-9xl">Home</h1>
         </div>
 
         <h3 class="text-3xl font-bold m-4">Your Tasks</h3>
-<div class="p-5 bg-gray-50 rounded-2xl grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 gap-5">
-    @for (task of tasks; track $index) {
+<div class="p-5 bg-gray-50 min-h-[300px] rounded-2xl grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 gap-5">
+    @for (task of Tasks(); track task.task_id) {
+        @if(task.status==='pending') {
     <div class="relative">
-        <div [class.!hidden]="(task.status==='pending')" class="absolute bg-gray opacity-80 w-full h-full flex items-center justify-center">
-            <div class="rounded-[50%] p-4 border-3 border-violet-800 flex justify-center items-center">
+        <!-- Gray cover and undo button when finishing -->
+        @if(finishingTaskId === task.task_id) {
+        <div class="absolute rounded-xl z-20 bg-gray opacity-80 w-full h-full flex flex-col items-center justify-center ">
+            <div class="rounded-[50%] p-4 border-3 border-violet-800 flex justify-center items-center  w-15 aspect-[1] mb-4">
                 <i class="fa-solid fa-check text-2xl text-violet-800"></i>
             </div>
+            <button (click)="undoFinishTask()" class="mt-2 px-4 py-2 bg-white text-violet-800 rounded shadow hover:bg-gray-200 font-bold">Undo</button>
         </div>
-        <div  class="bg-neutral-primary-soft block w-full border h-[280px] border-default rounded-base shadow-xs">
+        }
+        <div  class="bg-neutral-primary-soft block w-full border h-[280px] border-default rounded-base shadow-xs relative">
+            <div>
+                <button (click)="openDeleteModal(task)" class="absolute top-3 right-3 text-red-800 hover:text-red-950">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
             <div class="p-6 text-center flex flex-col justify-between h-full">
                 <span [class.!border-red-800]="task.priority === 'high'" 
                       [class.!border-yellow-800]="task.priority === 'medium'" 
@@ -26,7 +36,7 @@
                     {{task.priority}}
                 </span>
 
-                <h5 (click)="openModal(task);" class="cursor-pointer text-2xl font-semibold tracking-tight text-heading md:line-clamp-1">{{task.title}}</h5>
+                <h5 (click)="openModal(task);" class="cursor-pointer text-2xl font-semibold tracking-tight text-heading md:line-clamp-1"><i class="fa-solid fa-pen"></i> {{task.title}}</h5>
                 <h5 class=" text-md font-semibold tracking-tight text-gray-400 md:line-clamp-1">
                     @if(task.description){
                         {{task.description}}
@@ -36,28 +46,32 @@
                 </h5>
                 
                 @if (task.status === 'pending') {
-                                    <button (click)="finishTask(task)" class="transition duration-200 inline-flex justify-center items-center text-white bg-violet-800 box-border border border-transparent hover:bg-violet-950 focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
-                    Finish Task
-                <i class="fa-solid fa-check ml-2"></i>
-                </button>
-                <span [class.!text-red-800]="isExpired(task.deadline)" class="my-2 text-sm font-bold block text-gray-500">
-                  Deadline: @if(task.deadline){
-                     {{task.deadline}}
-                    }@else {
-                        Doesn't Have
-                    }
-                </span>
+                    <button (click)="finishTask(task)" [disabled]="finishingTaskId === task.task_id" class="transition duration-200 inline-flex justify-center items-center text-white bg-violet-800 box-border border border-transparent hover:bg-violet-950 focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
+                        Finish Task
+                        <i class="fa-solid fa-check ml-2"></i>
+                    </button>
+                    <span [class.!text-red-800]="isExpired(task.deadline)" class="my-2 text-sm font-bold block text-gray-500">
+                      Deadline: @if(task.deadline){
+                         {{task.deadline}}
+                        }@else {
+                            Doesn't Have
+                        }
+                    </span>
                 }
             </div>
 
         </div>
     </div>
     }
-
+    }
 </div>
+
+    <button (click)="openModal()" class="active:scale-[0.8] rounded-[50%] bg-violet-800 text-white w-15 aspect-[1] fixed bottom-10 right-10 text-3xl shadow-lg hover:bg-violet-950 transition duration-200">
+        <span>+</span>
+    </button>
  </section>
 
- @if(selectedTask){
+ @if(showModal()) {
  <div id="task-modal" tabindex="-1" aria-hidden="true" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-full bg-black/50 flex">
         <div class="relative p-4 w-full max-w-md max-h-full">
         <!-- Modal content -->
@@ -65,7 +79,7 @@
             <!-- Modal header -->
             <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
                 <h3 class="text-lg font-medium text-heading">
-                    {{selectedTask.status}}
+                    {{selectedTask?selectedTask.status:"Create New Task"}}
                 </h3>
                 <button (click)="closeModal()" type="button" class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center" data-modal-hide="crud-modal">
                     <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6"/></svg>
@@ -73,20 +87,19 @@
                 </button>
             </div>
             <!-- Modal body -->
-            <form action="#">
+            <form [formGroup]="TaskForm" (ngSubmit)="handleSubmit()">
                 <div class="grid gap-4 grid-cols-2 py-4 md:py-6">
                     <div class="col-span-2">
                         <label for="title" class="block mb-2.5 text-sm font-medium text-heading">Title</label>
-                        <input type="text" name="title" id="title" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="{{selectedTask.title}}" required="">
+                        <input formControlName="title" type="text" name="title" id="title" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-violet-800 focus:border-violet-800 block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Task Title">
                     </div>
                     <div class="col-span-2 sm:col-span-1">
                         <label for="deadline" class="block mb-2.5 text-sm font-medium text-heading">Deadline</label>
-                        <input type="date" name="deadline" id="deadline" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="{{selectedTask.deadline}}" required="">
+                        <input formControlName="deadline" type="datetime-local" name="deadline" id="deadline" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-violet-800 focus:border-violet-800 block w-full px-3 py-2.5 shadow-xs placeholder:text-body" >
                     </div>
                     <div class="col-span-2 sm:col-span-1">
                         <label for="priority" class="block mb-2.5 text-sm font-medium text-heading">Priority</label>
-                        <select id="priority" class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand px-3 py-2.5 shadow-xs placeholder:text-body">
-                            <option selected="">{{selectedTask.priority}}</option>
+                        <select formControlName="priority" id="priority" class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-violet-800 focus:border-violet-800 px-3 py-2.5 shadow-xs placeholder:text-body">
                             <option value="high">High</option>
                             <option value="medium">Medium</option>
                             <option value="low">Low</option>
@@ -94,13 +107,16 @@
                     </div>
                     <div class="col-span-2">
                         <label for="description" class="block mb-2.5 text-sm font-medium text-heading">Product Description</label>
-                        <textarea id="description" rows="4" class="min-h-[100px] bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full p-3.5 shadow-xs placeholder:text-body" placeholder="Write task description here">{{selectedTask.description}}</textarea>                    
+                        <textarea formControlName="description" id="description" rows="4" class="min-h-[100px] bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-violet-800 focus:border-violet-800 block w-full p-3.5 shadow-xs placeholder:text-body" placeholder="Write task description here"></textarea>                    
                     </div>
                 </div>
                 <div class="flex items-center space-x-4 border-t border-default pt-4 md:pt-6">
-                    <button type="submit" class="inline-flex items-center  text-white bg-brand hover:bg-brand-strong box-border border border-transparent focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
-                        <svg class="w-4 h-4 me-1.5 -ms-0.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7 7V5"/></svg>
-                        Add new product
+                    <button [class.!bg-gray]="loading()" [disabled]="TaskForm.invalid" type="submit" [class.pointer-events-none]="loading()" [disabled]="loading()" (click)="selectedTask?UpdateTask():CreateTask()" class="inline-flex items-center  text-white bg-violet-800 hover:bg-violet-950 transition duration-200 shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 active:scale-[0.8]">
+                        @if (loading()) {
+                            loading <i class="fa-spinner fa-solid fa-spin ms-2"></i>
+                        } @else {
+                            {{selectedTask?'Update Task':'Create Task'}}
+                        }
                     </button>
                     <button data-modal-hide="crud-modal" type="button" class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cancel</button>
                 </div>
@@ -109,3 +125,40 @@
     </div>
 </div>
  }
+
+ @if(modalDel()) {
+ <div id="delete-modal" tabindex="-1" aria-hidden="true" class="overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-full bg-black/50 flex">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+        <!-- Modal content -->
+        <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
+            <!-- Modal header -->
+            <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                <h3 class="text-lg font-medium text-heading">
+                    Delete Task
+                </h3>
+                <button (click)="closeDel()" type="button" class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center" data-modal-hide="delete-modal">
+                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6"/></svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
+            <!-- Modal body -->
+            <div class="p-6 text-center">
+                <i class="fa-solid fa-triangle-exclamation text-6xl text-red-800 mb-4"></i>
+                <h3 class="mb-5 text-lg font-normal text-body">Are you sure you want to delete this task?</h3>
+                <button (click)="deleteTask()" [class.!bg-gray]="loading()" [disabled]="loading()" type="button" class="text-white bg-red-800 hover:bg-red-950 focus:ring-4 focus:ring-red-300 font-medium rounded-base text-sm inline-flex items-center px-5 py-2.5 text-center mr-2">
+                    @if (loading()) {
+                        Deleting <i class="fa-spinner fa-solid fa-spin ms-2"></i>
+                    } @else {
+                        Yes, I'm sure
+                    }
+                </button>
+                <button (click)="closeDel()" type="button" class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">No, cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+ }
+
+ 
+
+ 

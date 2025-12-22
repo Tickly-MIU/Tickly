@@ -28,30 +28,49 @@ export class LoginComponent implements OnInit {
     this.loading.set(true);
     this.AuthService.login(value).pipe(delay(1000)).subscribe({
       next: (res) => {
-        this.loading.set(false);
-        this.message.set(res.message);
-        if(res.success === true){
-          localStorage.setItem('userRole', res.user.role);
-          this.router.navigate(['/home']);
-          console.log('User role stored in localStorage:', res.user.role);
+this.loading.set(false);
+        this.message.set(res.message);        
+        if (res.success && res.data?.user) {
+          // Store user data in localStorage
+          localStorage.setItem('userRole', res.data.user.role);
+          localStorage.setItem('userId', res.data.user.id.toString());
+          localStorage.setItem('userName', res.data.user.name);
+          localStorage.setItem('userEmail', res.data.user.email);
+          
+          // Small delay before navigation for better UX
+          setTimeout(() => {
+            console.log('Navigating to /home now');
+            this.router.navigate(['/home']);
+          }, 500);
+        } else {
+          // Handle case where success is true but user data is missing
+          this.message.set(res.message || 'Login successful but user data not received');
         }
       },
-      error: (err) => {
-        this.loading.set(false);
-        if (err && err.error && err.error.message) {
-          this.message.set(err.error.message);
-        } else if (err && err.message) {
-          this.message.set(err.message);
-        } else {
-          this.message.set('An error occurred. Please try again.');
-        }
-      }
+      error: (err) => {        
+  this.loading.set(false);
+
+  if (err.status === 401) {
+    this.message.set(
+      err.error?.message || 'Invalid email or password. Please try again.'
+    );
+  } else if (err.status === 0) {
+    this.message.set(
+      'Cannot connect to server. Please check if the server is running.'
+    );
+  } else {
+    this.message.set(
+      err.error?.message || err.message || 'Login failed. Please try again.'
+    );
+  }
+}
+
     });
   }
 
   loginForm = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email]),
-    password: new FormControl('', [Validators.required, Validators.pattern(/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/)]),
+    password: new FormControl('', [Validators.required, ]),
   });
 
   @ViewChild('InvalidInput')

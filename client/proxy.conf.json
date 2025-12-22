@@ -1,0 +1,12 @@
+{
+  "/api": {
+    "target": "https://tickly.page.gd",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/api": "/Tickly/Server/public/api"
+    }
+  }
+}
+

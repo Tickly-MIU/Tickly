@@ -20,7 +20,7 @@ export class RegisterComponent {
 
   register(value:UserSignUp){ 
     this.loading.set(true);
-    this.AuthService.register(value).pipe(delay(1000)).subscribe({
+    this.AuthService.register(value).pipe(delay(3000)).subscribe({
       next: (res) => {
         this.loading.set(false);
         console.log(res.message);
@@ -61,10 +61,8 @@ export class RegisterComponent {
     }
     const values = this.registerForm.value;
     this.register(values as UserSignUp);
-    this.register(values as UserSignUp);
   }
 
-  get full_name() { return this.registerForm.get('full_name'); }
   get full_name() { return this.registerForm.get('full_name'); }
   get email() { return this.registerForm.get('email'); }
   get password() { return this.registerForm.get('password'); }
