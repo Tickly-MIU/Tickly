@@ -5,7 +5,20 @@
   "projects": {
     "tickly": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+                "@schematics/angular:component": {
+          "type": "component"
+        },
+        "@schematics/angular:service": {
+          "type": "service"
+        },
+        "@schematics/angular:directive": {
+          "type": "directive"
+        },
+        "@schematics/angular:interface": {
+          "type": "interface"
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -27,6 +40,7 @@
               "node_modules/aos/dist/aos.css"
             ],
             "scripts": [
+              "node_modules/flowbite/dist/flowbite.min.js",
               "node_modules/aos/dist/aos.js"
             ]
           },

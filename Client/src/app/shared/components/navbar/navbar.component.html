@@ -1,5 +1,92 @@
-<section class="flex items-center gap-2 px-4 py-3 flex-col h-full justify-center shadow-2xs mb-2">
-    <h2 class="text-5xl text-violet-800">Tickly</h2>
-    <a routerLink="/register" type="button" class="text-white bg-violet-800 hover:bg-violet-900 focus:ring-4 focus:outline-none focus:ring-violet-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200">Get Started</a>
-    <a routerLink="/dashboard" type="button" class="text-white bg-violet-800 hover:bg-violet-900 focus:ring-4 focus:outline-none focus:ring-violet-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200">Dashboard</a>
-</section>
+<nav
+  class="bg-neutral-primary fixed w-full z-20 top-0 start-0 border-b border-default"
+>
+  <div
+    class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4"
+  >
+    <div class="flex gap-1 items-center justify-center">
+      <i class="fa-solid fa-check text-violet-800 text-4xl"></i>
+      <h2 class="text-5xl text-violet-800">Tickly</h2>
+    </div>
+    <button
+      data-collapse-toggle="navbar-default"
+      type="button"
+      class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-body rounded-base md:hidden hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+      aria-controls="navbar-default"
+      aria-expanded="false"
+    >
+      <span class="sr-only">Open main menu</span>
+      <svg
+        class="w-6 h-6"
+        aria-hidden="true"
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-width="2"
+          d="M5 7h14M5 12h14M5 17h14"
+        />
+      </svg>
+    </button>
+    <div class="hidden w-full md:block md:w-auto" id="navbar-default">
+      <div>
+
+        @if(!loggedIn){
+        <a
+          routerLink="/register"
+          routerLinkActive="!text-violet-800"
+          type="button"
+          class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
+          >Sign Up</a
+        >
+        <a
+          routerLink="/login"
+          routerLinkActive="!text-violet-800"
+          type="button"
+          class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
+          >Login</a
+        >
+        }@else {
+
+
+                  <a
+          routerLink="/tasks"
+          routerLinkActive="!text-violet-800"
+          type="button"
+          class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
+          >Tasks</a
+        >
+                  @if (isAdmin) {
+ <a
+          routerLink="/dashboard"
+          routerLinkActive="!text-violet-800"
+          type="button"
+          class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
+          >Dashboard</a
+        >
+          }
+                <a
+          routerLink="/profile"
+          routerLinkActive="!text-violet-800"
+          type="button"
+          class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
+          >profile</a
+        >
+        <a
+          (click)="logout()"
+          type="button"
+          class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
+          >Logout</a
+          >
+        }
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="my-20"></div>

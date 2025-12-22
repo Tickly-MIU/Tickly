@@ -17,7 +17,7 @@ export interface SignUpResponse {
 export interface LoginResponse {
     success:boolean;
     message:string;
-    data?: {
+        data?: {
         user: User;
     };
 }
