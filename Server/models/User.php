@@ -71,5 +71,14 @@ class User
 
         return $stmt->execute();
     }
+
+    public function updatePassword($email, $newPasswordHash)
+    {
+        $query = "UPDATE users SET password_hash = ? WHERE email = ?";
+        $stmt  = $this->conn->prepare($query);
+        $stmt->bind_param("ss", $newPasswordHash, $email);
+
+        return $stmt->execute();
+    }
 }
 ?>

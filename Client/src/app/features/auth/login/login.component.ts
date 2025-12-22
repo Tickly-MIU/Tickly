@@ -14,7 +14,7 @@ import { CommonModule } from '@angular/common';
 export class LoginComponent implements OnInit {
   router = inject(Router);
   authService = inject(AuthService);
-  
+
   loading = false;
   message = '';
   isSuccess = false;
@@ -63,11 +63,11 @@ export class LoginComponent implements OnInit {
           hasData: !!res.data,
           hasUser: !!res.data?.user
         });
-        
+
         this.loading = false;
         this.message = res.message;
         this.isSuccess = res.success;
-        
+
         if (res.success && res.data?.user) {
           console.log('✓ Login successful - User data received');
           // Store user data in localStorage
@@ -75,14 +75,14 @@ export class LoginComponent implements OnInit {
           localStorage.setItem('userId', res.data.user.id.toString());
           localStorage.setItem('userName', res.data.user.name);
           localStorage.setItem('userEmail', res.data.user.email);
-          
+
           console.log('User logged in:', {
             id: res.data.user.id,
             name: res.data.user.name,
             email: res.data.user.email,
             role: res.data.user.role
           });
-          
+
           // Small delay before navigation for better UX
           console.log('Navigating to /home in 500ms...');
           setTimeout(() => {
@@ -105,10 +105,10 @@ export class LoginComponent implements OnInit {
           url: err.url,
           message: err.message
         });
-        
+
         this.loading = false;
         this.isSuccess = false;
-        
+
         // Handle specific error cases
         if (err.status === 401) {
           this.message = err.error?.message || 'Invalid email or password. Please try again.';
@@ -125,24 +125,24 @@ export class LoginComponent implements OnInit {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       if (this.firstInvalidControl) {
-        this.firstInvalidControl.nativeElement.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center' 
+        this.firstInvalidControl.nativeElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
         });
       }
       return;
     }
-    
+
     const values = this.loginForm.value;
     this.login(values as UserLogin);
   }
 
-  get email() { 
-    return this.loginForm.get('email'); 
+  get email() {
+    return this.loginForm.get('email');
   }
-  
-  get password() { 
-    return this.loginForm.get('password'); 
+
+  get password() {
+    return this.loginForm.get('password');
   }
 }
 

@@ -17,39 +17,37 @@ class Router {
         // Remove trailing slashes except for root
         $path = rtrim($path, '/') ?: '/';
         
-        // Adjust this to match the actual URL path where your public folder is served.
-        // The API can be accessed via:
-        //   1. Direct: http://localhost/Tickly/Server/public/api/...
-        //   2. Via .htaccess rewrite: http://localhost/Tickly/api/... (rewritten to Server/public/index.php)
-        // Handle various path formats
+        // List of base paths to strip to get to the "relative" API path
         $pathReplacements = [
-            '/Tickly/api',           // New path via .htaccess rewrite
-            '/Tickly/api/',          // New path via .htaccess rewrite (with trailing slash)
-            '/Tickly/Server/public', // Old direct path
-            '/Tickly/Server/public/',// Old direct path (with trailing slash)
-            'Tickly/api',            // Without leading slash
-            'Tickly/Server/public',  // Without leading slash
-            '/api',                  // Just /api (if base is different)
-            'api'                    // Just api
+            '/Tickly/Server/public', // Direct path via XAMPP
+            '/Tickly/api',           // Rewritten path via root .htaccess
+            '/Tickly',               // Project root
+            '/api',                  // Just /api
         ];
         
+        $normalizedPath = $path;
         foreach ($pathReplacements as $replacement) {
-            if (strpos($path, $replacement) === 0) {
-                $path = substr($path, strlen($replacement));
-                break;
+            if (strpos($normalizedPath, $replacement) === 0) {
+                $normalizedCandidate = substr($normalizedPath, strlen($replacement));
+                // Only accept if it results in a meaningful path or if we want to preserve /api
+                // If the route definition includes /api, we should be careful about stripping it
+                if ($normalizedCandidate === '' || $normalizedCandidate[0] === '/') {
+                    $normalizedPath = $normalizedCandidate;
+                    break;
+                }
             }
         }
         
-        // Ensure path starts with / for API routes
+        $path = $normalizedPath ?: '/';
+
+        // Ensure path starts with / for routing if not already (and if not empty)
         if ($path !== '/' && $path[0] !== '/') {
             $path = '/' . $path;
         }
-        
-        // Remove trailing slashes again after replacement
-        $path = rtrim($path, '/') ?: '/';
-        
-        // Debug: Uncomment to see what path is being matched
-        // error_log("Router Debug - Method: $method, Path: $path, URI: $uri");
+
+        // Special case: if the route exists WITH /api but we stripped it, or vice versa
+        // Let's log what we found
+        error_log("Router Debug - Method: $method, Calculated Path: $path, Original URI: $uri");
 
         // Collect request data to pass into controller methods
         $payload = null;
