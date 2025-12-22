@@ -26,7 +26,7 @@ export class RegisterComponent {
         console.log(res.message);
         this.message.set(res.message);
         if (res.success === true) {
-          this.router.navigate(['/home']);
+          this.router.navigate(['/tasks']);
         }
       },
       error: (err) => {
