@@ -21,6 +21,14 @@ export class ApiService {
     return this.http.post(`${API_BASE}/logout`, {}, { withCredentials: true });
   }
 
+  requestReset(body: { email: string }) {
+    return this.http.post(`${API_BASE}/forgot-password`, body, { withCredentials: true });
+  }
+
+  resetPassword(body: { email: string; token: string; new_password: string }) {
+    return this.http.post(`${API_BASE}/reset-password`, body, { withCredentials: true });
+  }
+
   getTasks() {
     return this.http.get(`${API_BASE}/tasks`, { withCredentials: true });
   }
