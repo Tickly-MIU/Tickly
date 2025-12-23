@@ -5,8 +5,10 @@
     class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4"
   >
     <div class="flex gap-1 items-center justify-center">
-      <i class="fa-solid fa-check text-violet-800 text-4xl"></i>
-      <h2 class="text-5xl text-violet-800">Tickly</h2>
+      <a routerLink="/" class="flex gap-1 items-center justify-center cursor-pointer">
+        <i class="fa-solid fa-check text-violet-800 text-4xl"></i>
+        <h2 class="text-5xl text-violet-800">Tickly</h2>
+      </a>
     </div>
     <button
       data-collapse-toggle="navbar-default"
@@ -34,100 +36,123 @@
       </svg>
     </button>
     <div class="hidden w-full md:block md:w-auto" id="navbar-default">
-      <div class="flex flex-col md:flex-row">
+      <div class="flex flex-col md:flex-row items-center gap-2">
+        <!-- Not Logged In -->
         @if(!loggedIn()) {
-        <a
-          routerLink="/register"
-          routerLinkActive="!text-violet-800"
-          type="button"
-          class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
-          >Sign Up</a
-        >
-        <a
-          routerLink="/login"
-          routerLinkActive="!text-violet-800"
-          type="button"
-          class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
-          >Login</a
-        >
-        }@else {
-        <a
-          routerLink="/tasks"
-          routerLinkActive="!text-violet-800"
-          type="button"
-          class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
-          >Tasks</a
-        >
-        @if (isAdmin()) {
-        <a
-          routerLink="/dashboard"
-          routerLinkActive="!text-violet-800"
-          type="button"
-          class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
-          >Dashboard</a
-        >
-          }
-        <a
-          routerLink="/profile"
-          routerLinkActive="!text-violet-800"
-          type="button"
-          class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
-          >profile</a
-        >
-        <a
-          (click)="logout()"
-          type="button"
-          class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
-          >Logout</a
-          >
-        <div class="relative">
-          <button
-            (click)="toggleDropdown()"
+          <a
+            routerLink="/register"
+            routerLinkActive="!text-violet-800"
             type="button"
-            class="relative text-violet-800 text-xl p-2 hover:bg-neutral-secondary-soft rounded-base transition-all duration-200"
+            class="text-black font-medium text-sm px-5 py-2.5 text-center transition-all duration-200 hover:text-violet-800"
+            >Sign Up</a
           >
-            <i class="fa-solid fa-bell"></i>
-            @if (reminders().length > 0) {
-              <span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {{ reminders().length }}
-              </span>
+          <a
+            routerLink="/login"
+            routerLinkActive="!text-violet-800"
+            type="button"
+            class="text-black font-medium text-sm px-5 py-2.5 text-center transition-all duration-200 hover:text-violet-800"
+            >Login</a
+          >
+        }
+        
+        <!-- Logged In - All Users -->
+        @if(loggedIn()) {
+          <!-- User Info Display -->
+          <div class="flex items-center gap-2 px-3 py-2 bg-violet-50 rounded-lg">
+            <i class="fa-solid fa-user text-violet-800"></i>
+            <span class="text-sm font-medium text-violet-800">{{ userName() }}</span>
+            @if(isAdmin()) {
+              <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-semibold">Admin</span>
             }
-          </button>
-          @if (dropdownOpen()) {
-            <div class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-default z-50 max-h-96 overflow-y-auto">
-              <div class="p-4 border-b border-default">
-                <h3 class="text-lg font-semibold text-violet-800">Reminders</h3>
-              </div>
-              <div class="p-2">
-                @if (reminders().length === 0) {
-                  <div class="p-4 text-center text-gray-500">
-                    No reminders available
-                  </div>
-                } @else {
-                  @for (reminder of reminders(); track reminder.reminder_id) {
-                    <div class="p-3 mb-2 hover:bg-neutral-secondary-soft rounded-base transition-all duration-200 border-b border-default last:border-b-0">
-                      <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                          <p class="text-sm font-medium text-heading">Task ID: {{ reminder.task_id }}</p>
-                          <p class="text-xs text-body mt-1">
-                            {{ reminder.reminder_time | date:'short' }}
-                          </p>
-                        </div>
-                        <div class="ml-2">
-                          @if (reminder.sent) {
-                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Sent</span>
-                          } @else {
-                            <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Pending</span>
-                          }
+          </div>
+
+          <!-- Navigation Links -->
+          <a
+            routerLink="/tasks"
+            routerLinkActive="!text-violet-800"
+            type="button"
+            class="text-black font-medium text-sm px-5 py-2.5 text-center transition-all duration-200 hover:text-violet-800"
+            >Tasks</a
+          >
+          
+          <!-- Admin Only Links -->
+          @if (isAdmin()) {
+            <a
+              routerLink="/dashboard"
+              routerLinkActive="!text-violet-800"
+              type="button"
+              class="text-black font-medium text-sm px-5 py-2.5 text-center transition-all duration-200 hover:text-violet-800"
+              >Dashboard</a
+            >
+          }
+          
+          <!-- All Users Links -->
+          <a
+            routerLink="/profile"
+            routerLinkActive="!text-violet-800"
+            type="button"
+            class="text-black font-medium text-sm px-5 py-2.5 text-center transition-all duration-200 hover:text-violet-800"
+            >Profile</a
+          >
+          
+          <!-- Reminders (All Logged In Users) -->
+          <div class="relative">
+            <button
+              (click)="toggleDropdown()"
+              type="button"
+              class="relative text-violet-800 text-xl p-2 hover:bg-neutral-secondary-soft rounded-base transition-all duration-200"
+            >
+              <i class="fa-solid fa-bell"></i>
+              @if (reminders().length > 0) {
+                <span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {{ reminders().length }}
+                </span>
+              }
+            </button>
+            @if (dropdownOpen()) {
+              <div class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-default z-50 max-h-96 overflow-y-auto">
+                <div class="p-4 border-b border-default">
+                  <h3 class="text-lg font-semibold text-violet-800">Reminders</h3>
+                </div>
+                <div class="p-2">
+                  @if (reminders().length === 0) {
+                    <div class="p-4 text-center text-gray-500">
+                      No reminders available
+                    </div>
+                  } @else {
+                    @for (reminder of reminders(); track reminder.reminder_id) {
+                      <div class="p-3 mb-2 hover:bg-neutral-secondary-soft rounded-base transition-all duration-200 border-b border-default last:border-b-0">
+                        <div class="flex items-start justify-between">
+                          <div class="flex-1">
+                            <p class="text-sm font-medium text-heading">Task ID: {{ reminder.task_id }}</p>
+                            <p class="text-xs text-body mt-1">
+                              {{ reminder.reminder_time | date:'short' }}
+                            </p>
+                          </div>
+                          <div class="ml-2">
+                            @if (reminder.sent) {
+                              <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Sent</span>
+                            } @else {
+                              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Pending</span>
+                            }
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    }
                   }
-                }
+                </div>
               </div>
-            </div>
-          }
-        </div>
+            }
+          </div>
+          
+          <!-- Logout Button -->
+          <button
+            (click)="logout()"
+            type="button"
+            class="text-red-600 font-medium text-sm px-5 py-2.5 text-center transition-all duration-200 hover:text-red-800 hover:bg-red-50 rounded-lg"
+            >
+            <i class="fa-solid fa-sign-out-alt mr-2"></i>Logout
+          </button>
         }
       </div>
     </div>

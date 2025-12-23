@@ -19,18 +19,51 @@ export class NavbarComponent implements OnInit {
   reminders = signal<Reminder[]>([]);
   dropdownOpen = signal<boolean>(false);
   
-  ngOnInit() {
-    this.loggedIn.set(localStorage.getItem('userId')!==null);
-    if (this.loggedIn()) {
-      this.loadReminders();
-    }
-  }
-  
   // Use the AuthService.logged signal directly
   loggedIn = this.AuthService.logged;
 
   // Computed signal for admin role
-  isAdmin = computed(() => localStorage.getItem('userRole') === 'admin');
+  isAdmin = computed(() => {
+    const role = localStorage.getItem('userRole');
+    return role === 'admin' || role === 'Admin';
+  });
+
+  // Computed signal for regular user (not admin)
+  isRegularUser = computed(() => {
+    return this.loggedIn() && !this.isAdmin();
+  });
+
+  // Get user name from localStorage
+  userName = computed(() => {
+    return localStorage.getItem('userName') || localStorage.getItem('userEmail') || 'User';
+  });
+
+  // Get user email
+  userEmail = computed(() => {
+    return localStorage.getItem('userEmail') || '';
+  });
+  
+  ngOnInit() {
+    // Check initial login state
+    const userId = localStorage.getItem('userId');
+    this.loggedIn.set(userId !== null);
+    
+    // Load reminders if logged in
+    if (this.loggedIn()) {
+      this.loadReminders();
+    }
+
+    // Listen for storage changes (e.g., when user logs in/out in another tab)
+    window.addEventListener('storage', () => {
+      const userId = localStorage.getItem('userId');
+      this.loggedIn.set(userId !== null);
+      if (this.loggedIn()) {
+        this.loadReminders();
+      } else {
+        this.reminders.set([]);
+      }
+    });
+  }
 
   loadReminders() {
     this.reminderService.getReminders().subscribe({
@@ -51,10 +84,6 @@ export class NavbarComponent implements OnInit {
   }
 
   logout() {
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userRole');
     this.AuthService.logout().subscribe({
       next: (res) => {
         console.log('Logout successful:', res);
@@ -63,8 +92,22 @@ export class NavbarComponent implements OnInit {
         console.error('Logout failed:', err);
       }
     });
+    
+    // Clear local storage
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
+    
+    // Update logged state
     this.AuthService.logged.set(false);
+    
+    // Clear reminders
+    this.reminders.set([]);
+    this.dropdownOpen.set(false);
+    
+    // Navigate to landing page
     this.router.navigate(['/landing-page']);
-    // isAdmin will update automatically due to computed
   }
 }
+

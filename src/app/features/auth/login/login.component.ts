@@ -37,7 +37,7 @@ export class LoginComponent implements OnInit {
           localStorage.setItem('userName', res.data.user.name);
           localStorage.setItem('userEmail', res.data.user.email);
           this.AuthService.logged.set(true);
-            this.router.navigate(['/home']);
+            this.router.navigate(['/tasks']);
           // Small delay before navigation for better UX
         } else {
           // Handle case where success is true but user data is missing
