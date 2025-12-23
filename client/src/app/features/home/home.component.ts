@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { TaskService } from '../../core/services/task.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
+import { filter, map } from 'rxjs';
 @Component({
   selector: 'app-home',
   imports: [ReactiveFormsModule, CommonModule],
@@ -16,31 +17,19 @@ export class HomeComponent implements OnInit {
   AuthService=inject(AuthService);
   TaskService=inject(TaskService);
   ngOnInit() {
-    //this.checkSession();
     this.loadTasks();
   }
   sessionValid: boolean = false;
   Tasks =signal<Task[]>([]);
   tasks: Task[] = [];
 
-  checkSession() {
-    this.AuthService.checkSession().subscribe({
-      next: (response:string) => {
-        this.sessionValid = true;
-        console.log('Session is valid:', response);
-      }
-      ,
-      error: (error:Error) => {
-        console.error('Session check failed:', error);
-      }
-    });
-    if(!this.sessionValid){
-      this.Router.navigate(['/login']);
-    }
-  }
-
   loadTasks() {
-    this.TaskService.getTasks().subscribe({
+    this.TaskService.getTasks().pipe(
+  map(res => ({
+    ...res,
+    data: res.data.filter((task: { status: string; }) => task.status === 'pending')
+  }))
+).subscribe({
       next: (res) => {
         console.log('Tasks loaded:', res.data);
         this.tasks = res.data;

@@ -28,7 +28,7 @@ export class LoginComponent implements OnInit {
     this.loading.set(true);
     this.AuthService.login(value).pipe(delay(1000)).subscribe({
       next: (res) => {
-this.loading.set(false);
+    this.loading.set(false);
         this.message.set(res.message);        
         if (res.success && res.data?.user) {
           // Store user data in localStorage
@@ -36,12 +36,9 @@ this.loading.set(false);
           localStorage.setItem('userId', res.data.user.id.toString());
           localStorage.setItem('userName', res.data.user.name);
           localStorage.setItem('userEmail', res.data.user.email);
-          
-          // Small delay before navigation for better UX
-          setTimeout(() => {
-            console.log('Navigating to /home now');
+          this.AuthService.logged.set(true);
             this.router.navigate(['/home']);
-          }, 500);
+          // Small delay before navigation for better UX
         } else {
           // Handle case where success is true but user data is missing
           this.message.set(res.message || 'Login successful but user data not received');
@@ -70,7 +67,7 @@ this.loading.set(false);
 
   loginForm = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email]),
-    password: new FormControl('', [Validators.required, ]),
+    password: new FormControl('', [Validators.required]),
   });
 
   @ViewChild('InvalidInput')

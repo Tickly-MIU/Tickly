@@ -1,4 +1,4 @@
-import { Injectable,inject } from '@angular/core';
+import { Injectable,inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { UserSignUp, UserLogin,SignUpResponse,LoginResponse,User } from './../models/user.interface';
@@ -12,6 +12,8 @@ const API_BASE = environment.API_BASE;
 export class AuthService {
   http=inject(HttpClient)
 
+  logged=signal(false);
+
   register(data: UserSignUp): Observable<SignUpResponse> {
     return this.http.post<SignUpResponse>(`${API_BASE}/register`, data, { withCredentials: true });
   }
@@ -24,10 +26,14 @@ export class AuthService {
     return this.http.post(`${API_BASE}/logout`, {}, { withCredentials: true });
   }
 
-  getProfile(): Observable<User>  {
-    return this.http.get<User>(`${API_BASE}/profile`, { withCredentials: true });
+  getProfile(): Observable<any>  {
+    return this.http.get(`${API_BASE}/profile`, { withCredentials: true });
   }
+  
 
+  getUsers(): Observable<any> {
+    return this.http.get(`${API_BASE}/users`, { withCredentials: true });
+  }
   checkSession(): Observable<any> {
     return this.http.get(`${API_BASE}/session-check`, { withCredentials: true });
   }

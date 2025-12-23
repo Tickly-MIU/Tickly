@@ -1,29 +1,70 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { RouterLink , RouterLinkActive ,Router} from '@angular/router';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { ReminderService } from '../../../core/services/reminder.service';
+import { Reminder } from '../../../core/models/reminder.interface';
+import { CommonModule, DatePipe } from '@angular/common';
+
 @Component({
   selector: 'app-navbar',
-  imports: [RouterLink ,RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, CommonModule, DatePipe],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent implements OnInit {
-  router=inject(Router);
-  AuthService=inject(AuthService);
-  loggedIn : boolean=false;
-  isAdmin : boolean = true;
+  router = inject(Router);
+  AuthService = inject(AuthService);
+  reminderService = inject(ReminderService);
+  
+  reminders = signal<Reminder[]>([]);
+  dropdownOpen = signal<boolean>(false);
+  
   ngOnInit() {
-    const token = localStorage.getItem('userId');
-    this.loggedIn = !!token;
-    const role = localStorage.getItem('userRole');
-    this.isAdmin = role === 'admin';
+    this.loggedIn.set(localStorage.getItem('userId')!==null);
+    if (this.loggedIn()) {
+      this.loadReminders();
+    }
   }
+  
+  // Use the AuthService.logged signal directly
+  loggedIn = this.AuthService.logged;
+
+  // Computed signal for admin role
+  isAdmin = computed(() => localStorage.getItem('userRole') === 'admin');
+
+  loadReminders() {
+    this.reminderService.getReminders().subscribe({
+      next: (reminders) => {
+        this.reminders.set(reminders);
+      },
+      error: (err) => {
+        console.error('Failed to load reminders:', err);
+      }
+    });
+  }
+
+  toggleDropdown() {
+    this.dropdownOpen.set(!this.dropdownOpen());
+    if (this.dropdownOpen() && this.reminders().length === 0) {
+      this.loadReminders();
+    }
+  }
+
   logout() {
-    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
     localStorage.removeItem('userRole');
-    this.loggedIn = false;
-    this.isAdmin = false;
-    this.AuthService.logout();
+    this.AuthService.logout().subscribe({
+      next: (res) => {
+        console.log('Logout successful:', res);
+      },
+      error: (err) => {
+        console.error('Logout failed:', err);
+      }
+    });
+    this.AuthService.logged.set(false);
     this.router.navigate(['/landing-page']);
+    // isAdmin will update automatically due to computed
   }
 }
