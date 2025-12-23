@@ -50,22 +50,6 @@ export class NavbarComponent implements OnInit {
     }
   }
 
-  refreshReminders() {
-    this.loadReminders();
-  }
-
-  deleteReminders() {
-    this.reminderService.deleteReminders().subscribe({
-      next: (res) => {
-        console.log('Reminders deleted successfully:', res);
-        this.loadReminders(); // Refresh the list after deletion
-      },
-      error: (err) => {
-        console.error('Failed to delete reminders:', err);
-      }
-    });
-  }
-
   logout() {
     localStorage.removeItem('userId');
     localStorage.removeItem('userName');

@@ -22,9 +22,5 @@ export class ReminderService {
       { withCredentials: true }
     );
   }
-
-  deleteReminders(): Observable<any> {
-    return this.http.delete(`${this.API_BASE}/reminders/delete`, { withCredentials: true });
-  }
 }
 
