@@ -9,10 +9,11 @@ import {
   inject,
   OnInit
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, CommonModule } from '@angular/common';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { AuthService } from '../../core/services/auth.service';
 import { User, UserStatistics } from '../../core/models/user.interface';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 Chart.register(...registerables);
 
@@ -29,6 +30,7 @@ interface DashboardUser {
 
 @Component({
   selector: 'app-dashboard',
+  imports: [CommonModule, ReactiveFormsModule, DatePipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
   providers: [DatePipe],
@@ -45,6 +47,22 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   // USERS SIGNAL
   // --------------------------------------------------------
   users = signal<DashboardUser[]>([]);
+  statistics = signal<any>(null);
+  activityLogs = signal<any[]>([]);
+  systemOverview = signal<any>(null);
+  
+  // Modal states
+  showAddAdminModal = signal<boolean>(false);
+  showStatisticsModal = signal<boolean>(false);
+  showActivityLogsModal = signal<boolean>(false);
+  showOverviewModal = signal<boolean>(false);
+  
+  // Add Admin Form
+  addAdminForm = new FormGroup({
+    full_name: new FormControl('', [Validators.required]),
+    email: new FormControl('', [Validators.required, Validators.email]),
+    password: new FormControl('', [Validators.required, Validators.minLength(6)])
+  });
 
 
   // --------------------------------------------------------
@@ -57,6 +75,51 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   usersInactiveCount = computed(() =>
     this.users().filter((u) => u.status === 'inactive').length
   );
+
+  // Accounts created in the last week
+  usersLastWeek = computed(() => {
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    return this.users().filter((u) => {
+      const createdDate = new Date(u.dateCreated);
+      return createdDate >= oneWeekAgo && createdDate <= now;
+    });
+  });
+
+  usersLastWeekCount = computed(() => this.usersLastWeek().length);
+
+  // Daily breakdown for last week
+  usersPerDayLastWeek = computed(() => {
+    const now = new Date();
+    const counts = new Map<string, number>();
+    
+    // Initialize all 7 days with 0
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      const key = date.toISOString().split('T')[0];
+      counts.set(key, 0);
+    }
+
+    // Count users per day
+    for (const user of this.usersLastWeek()) {
+      const createdDate = new Date(user.dateCreated);
+      createdDate.setHours(0, 0, 0, 0);
+      const key = createdDate.toISOString().split('T')[0];
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+
+    const sortedKeys = Array.from(counts.keys()).sort();
+    const labels = sortedKeys.map((key) => {
+      const date = new Date(key);
+      return this.datePipe.transform(date, 'EEE, MMM d')!;
+    });
+    const data = sortedKeys.map((key) => counts.get(key)!);
+    const maxValue = data.length > 0 ? Math.max(...data) : 1;
+
+    return { labels, data, maxValue };
+  });
 
   // LAST 6 MONTHS ONLY
   usersPerMonth = computed(() => {
@@ -89,6 +152,13 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   // FETCH USERS FROM API
   // --------------------------------------------------------
   ngOnInit(): void {
+    this.loadUsers();
+    this.loadStatistics();
+    this.loadActivityLogs();
+    this.loadSystemOverview();
+  }
+
+  loadUsers() {
     this.authService.getUsers().subscribe({
       next: (response: any) => {
         // Transform API response to DashboardUser format
@@ -107,6 +177,39 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       },
       error: (error) => {
         console.error('Error fetching users:', error);
+      }
+    });
+  }
+
+  loadStatistics() {
+    this.authService.getUserStatistics().subscribe({
+      next: (response: any) => {
+        this.statistics.set(response.data || response);
+      },
+      error: (error) => {
+        console.error('Error fetching statistics:', error);
+      }
+    });
+  }
+
+  loadActivityLogs() {
+    this.authService.getActivityLogs().subscribe({
+      next: (response: any) => {
+        this.activityLogs.set(response.data || response || []);
+      },
+      error: (error) => {
+        console.error('Error fetching activity logs:', error);
+      }
+    });
+  }
+
+  loadSystemOverview() {
+    this.authService.getSystemOverview().subscribe({
+      next: (response: any) => {
+        this.systemOverview.set(response.data || response);
+      },
+      error: (error) => {
+        console.error('Error fetching system overview:', error);
       }
     });
   }
@@ -139,16 +242,81 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   // DELETE USER
   // --------------------------------------------------------
   deleteUser(id: number) {
-    this.authService.deleteUser(id).subscribe({
+    if (confirm('Are you sure you want to delete this user?')) {
+      this.authService.deleteUser(id).subscribe({
+        next: (response) => {
+          console.log('User deleted successfully:', response);
+          // Remove from local state after successful deletion
+          this.users.update((users) => users.filter((u) => u.id !== id));
+          this.loadStatistics();
+          this.loadActivityLogs();
+        },
+        error: (error) => {
+          console.error('Error deleting user:', error);
+          alert('Failed to delete user');
+        }
+      });
+    }
+  }
+
+  // --------------------------------------------------------
+  // UPDATE USER ROLE
+  // --------------------------------------------------------
+  updateUserRole(userId: number, newRole: string) {
+    this.authService.updateUserRole(userId, newRole).subscribe({
       next: (response) => {
-        console.log('User deleted successfully:', response);
-        // Remove from local state after successful deletion
-        this.users.update((users) => users.filter((u) => u.id !== id));
+        console.log('User role updated successfully:', response);
+        // Update local state
+        this.users.update((users) => 
+          users.map((u) => 
+            u.id === userId ? { ...u, role: newRole === 'admin' ? 'Admin' : 'User' } : u
+          )
+        );
+        this.loadStatistics();
+        this.loadActivityLogs();
       },
       error: (error) => {
-        console.error('Error deleting user:', error);
+        console.error('Error updating user role:', error);
+        alert('Failed to update user role');
       }
     });
+  }
+
+  // --------------------------------------------------------
+  // ADD NEW ADMIN
+  // --------------------------------------------------------
+  openAddAdminModal() {
+    this.addAdminForm.reset();
+    this.showAddAdminModal.set(true);
+  }
+
+  closeAddAdminModal() {
+    this.showAddAdminModal.set(false);
+    this.addAdminForm.reset();
+  }
+
+  addNewAdmin() {
+    if (this.addAdminForm.valid) {
+      const formData = this.addAdminForm.value;
+      this.authService.addNewAdmin({
+        full_name: formData.full_name,
+        email: formData.email,
+        password: formData.password
+      }).subscribe({
+        next: (response) => {
+          console.log('Admin added successfully:', response);
+          this.closeAddAdminModal();
+          this.loadUsers();
+          this.loadStatistics();
+          this.loadActivityLogs();
+          alert('Admin added successfully!');
+        },
+        error: (error) => {
+          console.error('Error adding admin:', error);
+          alert(error.error?.message || 'Failed to add admin');
+        }
+      });
+    }
   }
 
   // --------------------------------------------------------
