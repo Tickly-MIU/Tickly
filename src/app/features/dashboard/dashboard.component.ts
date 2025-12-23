@@ -382,4 +382,20 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.chart = new Chart(this.myChart.nativeElement, barConfig);
     this.chart2 = new Chart(this.myChart2.nativeElement, lineConfig);
   }
+
+  // Helper methods for template
+  getObjectKeys(obj: any): string[] {
+    return obj ? Object.keys(obj) : [];
+  }
+
+  formatKey(key: string): string {
+    return key.replace(/_/g, ' ').toUpperCase();
+  }
+
+  stringifyValue(value: any): string {
+    if (typeof value === 'object' && value !== null) {
+      return JSON.stringify(value);
+    }
+    return String(value);
+  }
 }

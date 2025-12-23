@@ -150,9 +150,9 @@
                 </div>
                 @if(statistics()) {
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        @for(key of Object.keys(statistics()!); track key) {
+                        @for(key of getObjectKeys(statistics()); track key) {
                             <div class="bg-violet-50 p-4 rounded-lg">
-                                <p class="text-sm text-gray-600 mb-1">{{ key.replace(/_/g, ' ').toUpperCase() }}</p>
+                                <p class="text-sm text-gray-600 mb-1">{{ formatKey(key) }}</p>
                                 <p class="text-xl font-bold text-violet-800">{{ statistics()![key] }}</p>
                             </div>
                         }
@@ -214,15 +214,11 @@
                 </div>
                 @if(systemOverview()) {
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        @for(key of Object.keys(systemOverview()!); track key) {
+                        @for(key of getObjectKeys(systemOverview()); track key) {
                             <div class="bg-green-50 p-4 rounded-lg">
-                                <p class="text-sm text-gray-600 mb-1">{{ key.replace(/_/g, ' ').toUpperCase() }}</p>
+                                <p class="text-sm text-gray-600 mb-1">{{ formatKey(key) }}</p>
                                 <p class="text-xl font-bold text-green-800">
-                                    @if(typeof systemOverview()![key] === 'object') {
-                                        {{ JSON.stringify(systemOverview()![key]) }}
-                                    } @else {
-                                        {{ systemOverview()![key] }}
-                                    }
+                                    {{ stringifyValue(systemOverview()![key]) }}
                                 </p>
                             </div>
                         }
