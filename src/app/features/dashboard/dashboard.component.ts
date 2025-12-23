@@ -139,7 +139,16 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   // DELETE USER
   // --------------------------------------------------------
   deleteUser(id: number) {
-    this.users.update((users) => users.filter((u) => u.id !== id));
+    this.authService.deleteUser(id).subscribe({
+      next: (response) => {
+        console.log('User deleted successfully:', response);
+        // Remove from local state after successful deletion
+        this.users.update((users) => users.filter((u) => u.id !== id));
+      },
+      error: (error) => {
+        console.error('Error deleting user:', error);
+      }
+    });
   }
 
   // --------------------------------------------------------
