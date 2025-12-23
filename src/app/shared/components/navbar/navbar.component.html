@@ -80,7 +80,15 @@
           class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
           >Logout</a
           >
-        <div class="relative">
+        <div class="relative flex items-center gap-2">
+          <button
+            (click)="deleteReminders()"
+            type="button"
+            class="text-violet-800 text-lg p-2 hover:bg-neutral-secondary-soft rounded-base transition-all duration-200"
+            title="Delete all reminders"
+          >
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
           <button
             (click)="toggleDropdown()"
             type="button"
@@ -95,8 +103,16 @@
           </button>
           @if (dropdownOpen()) {
             <div class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-default z-50 max-h-96 overflow-y-auto">
-              <div class="p-4 border-b border-default">
+              <div class="p-4 border-b border-default flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-violet-800">Reminders</h3>
+                <button
+                  (click)="refreshReminders()"
+                  type="button"
+                  class="text-violet-800 hover:text-violet-950 p-2 rounded-base transition-all duration-200"
+                  title="Refresh reminders"
+                >
+                  <i class="fa-solid fa-rotate"></i>
+                </button>
               </div>
               <div class="p-2">
                 @if (reminders().length === 0) {
