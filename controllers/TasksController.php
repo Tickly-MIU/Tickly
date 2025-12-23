@@ -192,20 +192,36 @@ class TasksController extends Controller
     {
         // Calculate reminder time: 24 hours before deadline
         $deadlineTimestamp = strtotime($deadline);
-        $reminderTimestamp = $deadlineTimestamp - (24 * 60 * 60); // Subtract 24 hours
         
-        // Only create reminder if reminder time is in the future
-        if ($reminderTimestamp > time()) {
+        if ($deadlineTimestamp === false) {
+            error_log("TasksController: Invalid deadline format: {$deadline}");
+            return;
+        }
+        
+        $reminderTimestamp = $deadlineTimestamp - (24 * 60 * 60); // Subtract 24 hours
+        $currentTime = time();
+        
+        // Only create reminder if reminder time is in the future (or very recent past, within 5 minutes)
+        // This handles cases where there's a small delay between task creation and reminder creation
+        if ($reminderTimestamp > ($currentTime - 300)) { // Allow up to 5 minutes past
             $reminderTime = date('Y-m-d H:i:s', $reminderTimestamp);
             
             // Delete any existing reminders for this task (to avoid duplicates)
             $this->reminderModel->deleteByTaskId($task_id);
             
             // Create new reminder
-            $this->reminderModel->create([
+            $created = $this->reminderModel->create([
                 'task_id' => $task_id,
                 'reminder_time' => $reminderTime
             ]);
+            
+            if ($created) {
+                error_log("TasksController: Created reminder for task {$task_id} at {$reminderTime} (deadline: {$deadline})");
+            } else {
+                error_log("TasksController: Failed to create reminder for task {$task_id}");
+            }
+        } else {
+            error_log("TasksController: Reminder time {$reminderTimestamp} is too far in the past (current: {$currentTime}) for task {$task_id}");
         }
     }
 }

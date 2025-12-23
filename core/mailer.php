@@ -39,9 +39,11 @@ class Mailer
             self::sendCommand($socket, "EHLO " . gethostname(), 250);
             self::sendCommand($socket, "AUTH LOGIN", 334);
             self::sendCommand($socket, base64_encode($username), 334);
-            $authResponse = self::sendCommand($socket, base64_encode($password));
-            if (strpos($authResponse, '235') === false) {
-                throw new Exception("SMTP authentication failed. Response: " . trim($authResponse));
+            $authResponse = self::sendCommand($socket, base64_encode($password), null);
+            // Check for 235 (Authentication successful)
+            $authCode = (int)substr(trim($authResponse), 0, 3);
+            if ($authCode !== 235) {
+                throw new Exception("SMTP authentication failed. Got code: {$authCode}. Response: " . trim($authResponse));
             }
 
             self::sendCommand($socket, "MAIL FROM: <{$fromEmail}>", 250);

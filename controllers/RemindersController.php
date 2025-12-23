@@ -166,6 +166,40 @@ class RemindersController extends Controller
     }
 
     // ---------------------------
+    // Debug: Check Due Reminders (for testing)
+    // ---------------------------
+    public function debugReminders($data = [])
+    {
+        $dueReminders = $this->reminderModel->getDueReminders();
+        
+        // Also get all unsent reminders for debugging
+        require_once __DIR__ . '/../config/database.php';
+        $db = new Database();
+        $conn = $db->connect();
+        
+        $query = "SELECT r.*, t.title, t.deadline, t.status, u.email, u.full_name,
+                         NOW() as current_time,
+                         TIMESTAMPDIFF(SECOND, r.reminder_time, NOW()) as seconds_past_reminder_time
+                  FROM reminders r
+                  LEFT JOIN tasks t ON r.task_id = t.task_id
+                  LEFT JOIN users u ON t.user_id = u.user_id
+                  WHERE r.sent = 0
+                  ORDER BY r.reminder_time ASC";
+        $stmt = $conn->prepare($query);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $allUnsentReminders = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        
+        return Response::json(true, "Reminder debug info", [
+            'due_reminders_count' => count($dueReminders),
+            'due_reminders' => $dueReminders,
+            'all_unsent_reminders' => $allUnsentReminders,
+            'current_server_time' => date('Y-m-d H:i:s'),
+            'current_timestamp' => time()
+        ]);
+    }
+
+    // ---------------------------
     // Send Reminder Notifications (for cron job or manual trigger)
     // ---------------------------
     public function sendNotifications($data = [])
@@ -175,12 +209,17 @@ class RemindersController extends Controller
         $dueReminders = $this->reminderModel->getDueReminders();
 
         if (empty($dueReminders)) {
+            // Log for debugging
+            error_log("RemindersController: No due reminders found at " . date('Y-m-d H:i:s'));
             return Response::json(true, "No due reminders found", [
                 'sent' => 0,
                 'failed' => 0,
-                'total' => 0
+                'total' => 0,
+                'current_time' => date('Y-m-d H:i:s')
             ]);
         }
+
+        error_log("RemindersController: Found " . count($dueReminders) . " due reminders to send");
 
         $sentCount = 0;
         $failedCount = 0;

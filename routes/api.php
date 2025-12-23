@@ -32,5 +32,6 @@ $router->get('/api/reminders', 'RemindersController@getMyReminders');
 $router->post('/api/reminders/task', 'RemindersController@getByTask');
 $router->post('/api/reminders/update', 'RemindersController@update');
 $router->post('/api/reminders/delete', 'RemindersController@delete');
+$router->get('/api/reminders/debug', 'RemindersController@debugReminders');
 $router->post('/api/reminders/send-notifications', 'RemindersController@sendNotifications');
 $router->post('/api/reminders/send-deadline-notifications', 'RemindersController@sendDeadlineNotifications');
