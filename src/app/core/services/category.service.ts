@@ -11,7 +11,7 @@ const API_BASE = environment.API_BASE;
 export class CategoryService {
   http = inject(HttpClient);
 
-  createCategory(categoryData: { category_name: string }): Observable<any> {
+  createCategory(categoryData: { user_id: number; category_name: string; category_id?: number }): Observable<any> {
     return this.http.post(`${API_BASE}/category/create`, categoryData, { withCredentials: true });
   }
 
