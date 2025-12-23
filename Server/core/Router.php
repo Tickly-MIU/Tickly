@@ -17,74 +17,101 @@ class Router {
         // Remove trailing slashes except for root
         $path = rtrim($path, '/') ?: '/';
         
-        // List of base paths to strip to get to the "relative" API path
-        $pathReplacements = [
-            '/Tickly/Server/public', // Direct path via XAMPP
-            '/Tickly/api',           // Rewritten path via root .htaccess
-            '/Tickly',               // Project root
-            '/api',                  // Just /api
-        ];
-        
-        $normalizedPath = $path;
-        foreach ($pathReplacements as $replacement) {
-            if (strpos($normalizedPath, $replacement) === 0) {
-                $normalizedCandidate = substr($normalizedPath, strlen($replacement));
-                // Only accept if it results in a meaningful path or if we want to preserve /api
-                // If the route definition includes /api, we should be careful about stripping it
-                if ($normalizedCandidate === '' || $normalizedCandidate[0] === '/') {
-                    $normalizedPath = $normalizedCandidate;
+        // Adjust this to match the actual URL path where your public folder is served.
+        // The API can be accessed via:
+        //   1. Direct: http://localhost/Tickly/Server/public/api/...
+        //   2. Via .htaccess rewrite: http://localhost/Tickly/api/... (rewritten to Server/public/index.php)
+        //   3. Via Angular proxy: http://localhost:4200/api/... (proxied to http://localhost:80/Tickly/Server/public/api/...)
+        //   4. Heroku: https://app.herokuapp.com/api/... (path is already /api/..., keep as-is)
+        // Handle various path formats - check longer paths first, but NEVER strip /api
+        // If path already starts with /api, use it as-is (Heroku/production case)
+        if (strpos($path, '/api') === 0) {
+            // Path already starts with /api, use as-is (Heroku/production)
+            // No replacement needed
+        } else {
+            // Local development paths - strip base paths but keep /api
+            $pathReplacements = [
+                '/Tickly/Server/public',      // Direct path and proxy path (strip this, keep /api/...)
+                '/Tickly/api',                // .htaccess rewrite path
+                '/Tickly/api/',               // .htaccess rewrite path (with trailing slash)
+                '/Tickly/Server/public/',     // Direct path (with trailing slash)
+                'Tickly/Server/public',       // Without leading slash (direct/proxy)
+                'Tickly/api',                 // Without leading slash
+            ];
+            
+            foreach ($pathReplacements as $replacement) {
+                if (strpos($path, $replacement) === 0) {
+                    $path = substr($path, strlen($replacement));
                     break;
                 }
             }
         }
         
-        $path = $normalizedPath ?: '/';
-
-        // Ensure path starts with / for routing if not already (and if not empty)
+        // Ensure path starts with / for API routes
         if ($path !== '/' && $path[0] !== '/') {
             $path = '/' . $path;
         }
-
-        // Special case: if the route exists WITH /api but we stripped it, or vice versa
-        // Let's log what we found
-        error_log("Router Debug - Method: $method, Calculated Path: $path, Original URI: $uri");
+        
+        // Remove trailing slashes again after replacement
+        $path = rtrim($path, '/') ?: '/';
+        
+        // Debug: Log path matching for troubleshooting
+        error_log("Router Debug - Method: $method, Original URI: $uri, Final Path: $path");
 
         // Collect request data to pass into controller methods
         $payload = null;
         if ($method === 'POST') {
             $raw = file_get_contents('php://input');
+            error_log("Router Debug - Raw POST input: " . substr($raw, 0, 200)); // Log first 200 chars
             $payload = json_decode($raw, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                error_log("Router Debug - JSON decode error: " . json_last_error_msg());
+            }
             if (!is_array($payload)) {
+                error_log("Router Debug - Using $_POST fallback");
                 $payload = $_POST ?? [];
+            } else {
+                error_log("Router Debug - Parsed JSON payload: " . print_r(array_keys($payload), true));
             }
         } else {
             $payload = $_GET ?? [];
         }
 
+        // Helper function to execute controller action
+        $executeController = function($controllerName, $methodName, $payload) {
+            try {
+                require_once __DIR__ . "/../controllers/$controllerName.php";
+                $controller = new $controllerName();
+                $controller->$methodName($payload);
+            } catch (Exception $e) {
+                require_once __DIR__ . '/Response.php';
+                error_log("Controller Error: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+                Response::json(false, "Error: " . $e->getMessage(), [], 500);
+            } catch (Error $e) {
+                require_once __DIR__ . '/Response.php';
+                error_log("Controller Fatal Error: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+                Response::json(false, "Error: " . $e->getMessage(), [], 500);
+            }
+        };
+        
         // Try exact match first
         if (isset($this->routes[$method][$path])) {
             [$controllerName, $methodName] = explode('@', $this->routes[$method][$path]);
-            require_once __DIR__ . "/../controllers/$controllerName.php";
-            $controller = new $controllerName();
-            $controller->$methodName($payload);
+            $executeController($controllerName, $methodName, $payload);
             return;
         }
         
         // Try with leading slash if path doesn't have one
         if ($path[0] !== '/' && isset($this->routes[$method]['/' . $path])) {
             [$controllerName, $methodName] = explode('@', $this->routes[$method]['/' . $path]);
-            require_once __DIR__ . "/../controllers/$controllerName.php";
-            $controller = new $controllerName();
-            $controller->$methodName($payload);
+            $executeController($controllerName, $methodName, $payload);
             return;
         }
         
         // Try without leading slash if path has one
         if ($path[0] === '/' && strlen($path) > 1 && isset($this->routes[$method][substr($path, 1)])) {
             [$controllerName, $methodName] = explode('@', $this->routes[$method][substr($path, 1)]);
-            require_once __DIR__ . "/../controllers/$controllerName.php";
-            $controller = new $controllerName();
-            $controller->$methodName($payload);
+            $executeController($controllerName, $methodName, $payload);
             return;
         }
         

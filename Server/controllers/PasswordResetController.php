@@ -32,9 +32,9 @@ class PasswordResetController extends Controller
 
         // Save token
         if ($this->resetModel->createToken($email, $token)) {
-            require_once __DIR__ . '/../core/Mailer.php';
+            require_once __DIR__ . '/../core/mailer.php';
             
-            $resetLink = "http://localhost:4200/reset-password?token=" . $token . "&email=" . urlencode($email);
+            $resetLink = "https://tickly-3f3fb62f8bf7.herokuapp.com/reset-password?token=" . $token . "&email=" . urlencode($email);
             $message = "<p>Hello,</p><p>You requested a password reset. Click the link below to reset your password:</p>";
             $message .= "<a href='" . $resetLink . "'>" . $resetLink . "</a>";
             $message .= "<p>If you did not request this, please ignore this email.</p>";

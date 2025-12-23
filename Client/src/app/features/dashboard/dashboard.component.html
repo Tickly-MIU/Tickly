@@ -3,8 +3,82 @@
             <h1 class="text-2xl font-bold lg:text-9xl">Dashboard</h1>
         </div>
 
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-3 p-4 justify-center">
+            <button (click)="showStatisticsModal.set(true)" class="bg-violet-600 hover:bg-violet-700 text-white px-6 py-3 rounded-2xl transition-all">
+                <i class="fa-solid fa-chart-bar mr-2"></i> View Statistics
+            </button>
+            <button (click)="showActivityLogsModal.set(true)" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl transition-all">
+                <i class="fa-solid fa-list mr-2"></i> Activity Logs
+            </button>
+            <button (click)="showOverviewModal.set(true)" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-2xl transition-all">
+                <i class="fa-solid fa-chart-pie mr-2"></i> System Overview
+            </button>
+            <button (click)="openAddAdminModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-2xl transition-all">
+                <i class="fa-solid fa-user-plus mr-2"></i> Add New Admin
+            </button>
+        </div>
+
 
     <section class="p-1 lg:p-4 flex flex-col align-center ">
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-violet-100 p-6 rounded-2xl shadow-md">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Total Users</p>
+                        <p class="text-3xl font-bold text-violet-800">{{ users().length }}</p>
+                    </div>
+                    <i class="fa-solid fa-users text-4xl text-violet-600"></i>
+                </div>
+            </div>
+            <div class="bg-green-100 p-6 rounded-2xl shadow-md">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Active Users</p>
+                        <p class="text-3xl font-bold text-green-800">{{ usersActiveCount() }}</p>
+                    </div>
+                    <i class="fa-solid fa-user-check text-4xl text-green-600"></i>
+                </div>
+            </div>
+            <div class="bg-blue-100 p-6 rounded-2xl shadow-md">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">New Accounts (Last Week)</p>
+                        <p class="text-3xl font-bold text-blue-800">{{ usersLastWeekCount() }}</p>
+                    </div>
+                    <i class="fa-solid fa-user-plus text-4xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <!-- Last Week Statistics -->
+        <div class="bg-white p-6 rounded-2xl shadow-md mb-6">
+            <h2 class="text-2xl font-bold text-violet-800 mb-4">Accounts Created in Last Week</h2>
+            <div class="grid grid-cols-7 gap-2 mb-4">
+                @for(day of usersPerDayLastWeek().labels; track $index) {
+                    <div class="text-center">
+                        <div class="bg-violet-50 p-3 rounded-lg mb-2">
+                            <p class="text-xs font-semibold text-violet-800 mb-1">{{ usersPerDayLastWeek().data[$index] }}</p>
+                            <div class="h-20 bg-violet-200 rounded relative overflow-hidden">
+                                @if(usersPerDayLastWeek().data[$index] > 0) {
+                                    <div class="absolute bottom-0 left-0 right-0 bg-violet-600 rounded" 
+                                         [style.height.%]="(usersPerDayLastWeek().data[$index] / usersPerDayLastWeek().maxValue) * 100">
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-600 truncate">{{ day }}</p>
+                    </div>
+                }
+            </div>
+            <div class="mt-4 p-4 bg-violet-50 rounded-lg">
+                <p class="text-sm text-gray-700">
+                    <span class="font-semibold text-violet-800">{{ usersLastWeekCount() }}</span> 
+                    new account(s) created in the last 7 days
+                </p>
+            </div>
+        </div>
+
         <div class="flex flex-col lg:flex-row gap-3">
             <div class="w-full p-3 flex items-center justify-center lg:w-1/3 h-[400px] bg-violet-300 rounded-2xl" >
                 <canvas #myChart class="w-full h-full"></canvas>
@@ -44,11 +118,18 @@
                             </div>
                         </div>
                     </th>
-                    <td class="px-6 py-4">{{user.role}}</td>
+                    <td class="px-6 py-4">
+                        <select (change)="updateUserRole(user.id, $any($event.target).value)" 
+                                [value]="user.role.toLowerCase()"
+                                class="px-3 py-1 border border-violet-400 rounded-lg bg-white text-sm focus:border-violet-800 focus:outline-none">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </td>
                     <td class="px-6 py-4">{{user.status}}</td>
-                    <td class=" px-3 py-4">
+                    <td class="px-3 py-4 flex gap-2">
                         <button (click)="deleteUser(user.id)" class="font-medium text-red-700 hover:underline bg-none border-none cursor-pointer">
-                            Delete user
+                            <i class="fa-solid fa-trash mr-1"></i> Delete
                         </button>
                     </td>
                 </tr>
@@ -56,4 +137,150 @@
             </tbody>
         </table> 
     </section>
+
+    <!-- Statistics Modal -->
+    @if(showStatisticsModal()) {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-violet-800">User Statistics</h2>
+                    <button (click)="showStatisticsModal.set(false)" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa-solid fa-times text-2xl"></i>
+                    </button>
+                </div>
+                @if(statistics()) {
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @for(key of getObjectKeys(statistics()); track key) {
+                            <div class="bg-violet-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600 mb-1">{{ formatKey(key) }}</p>
+                                <p class="text-xl font-bold text-violet-800">{{ statistics()![key] }}</p>
+                            </div>
+                        }
+                    </div>
+                } @else {
+                    <p class="text-gray-500">Loading statistics...</p>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Activity Logs Modal -->
+    @if(showActivityLogsModal()) {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-violet-800">Activity Logs</h2>
+                    <button (click)="showActivityLogsModal.set(false)" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa-solid fa-times text-2xl"></i>
+                    </button>
+                </div>
+                @if(activityLogs().length > 0) {
+                    <div class="space-y-2">
+                        @for(log of activityLogs(); track $index) {
+                            <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-violet-600">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-semibold text-gray-800">{{ log.action || log.type || 'Activity' }}</p>
+                                        <p class="text-sm text-gray-600">{{ log.description || log.message || 'No description' }}</p>
+                                        @if(log.user) {
+                                            <p class="text-xs text-gray-500 mt-1">User: {{ log.user.name || log.user.email }}</p>
+                                        }
+                                    </div>
+                                    <div class="text-right">
+                                        @if(log.created_at) {
+                                            <p class="text-xs text-gray-500">{{ log.created_at | date:'short' }}</p>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                } @else {
+                    <p class="text-gray-500">No activity logs available</p>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- System Overview Modal -->
+    @if(showOverviewModal()) {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-violet-800">System Overview</h2>
+                    <button (click)="showOverviewModal.set(false)" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa-solid fa-times text-2xl"></i>
+                    </button>
+                </div>
+                @if(systemOverview()) {
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @for(key of getObjectKeys(systemOverview()); track key) {
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600 mb-1">{{ formatKey(key) }}</p>
+                                <p class="text-xl font-bold text-green-800">
+                                    {{ stringifyValue(systemOverview()![key]) }}
+                                </p>
+                            </div>
+                        }
+                    </div>
+                } @else {
+                    <p class="text-gray-500">Loading system overview...</p>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Add Admin Modal -->
+    @if(showAddAdminModal()) {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl p-6 max-w-md w-full">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-violet-800">Add New Admin</h2>
+                    <button (click)="closeAddAdminModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa-solid fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <form [formGroup]="addAdminForm" (ngSubmit)="addNewAdmin()" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input formControlName="full_name" type="text" 
+                               class="w-full px-4 py-2 border border-violet-400 rounded-lg focus:border-violet-800 focus:outline-none"
+                               placeholder="Enter full name">
+                        @if(addAdminForm.get('full_name')?.invalid && addAdminForm.get('full_name')?.touched) {
+                            <p class="text-red-500 text-xs mt-1">Full name is required</p>
+                        }
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input formControlName="email" type="email" 
+                               class="w-full px-4 py-2 border border-violet-400 rounded-lg focus:border-violet-800 focus:outline-none"
+                               placeholder="Enter email">
+                        @if(addAdminForm.get('email')?.invalid && addAdminForm.get('email')?.touched) {
+                            <p class="text-red-500 text-xs mt-1">Valid email is required</p>
+                        }
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input formControlName="password" type="password" 
+                               class="w-full px-4 py-2 border border-violet-400 rounded-lg focus:border-violet-800 focus:outline-none"
+                               placeholder="Enter password (min 6 characters)">
+                        @if(addAdminForm.get('password')?.invalid && addAdminForm.get('password')?.touched) {
+                            <p class="text-red-500 text-xs mt-1">Password must be at least 6 characters</p>
+                        }
+                    </div>
+                    <div class="flex gap-3 pt-4">
+                        <button type="submit" 
+                                [disabled]="addAdminForm.invalid"
+                                class="flex-1 bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg transition-all">
+                            Add Admin
+                        </button>
+                        <button type="button" (click)="closeAddAdminModal()" 
+                                class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg transition-all">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
 

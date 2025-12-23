@@ -1,27 +1,12 @@
 {
     "name": "tickly/server",
-    "description": "Backend server for Tickly application",
+    "description": "Tickly API Server",
     "type": "project",
-    "require": {
-        "php": ">=8.1",
-        "guzzlehttp/guzzle": "^7.5",
-        "psr/http-client": "^1.0",
-        "psr/http-factory": "^1.0",
-        "psr/http-message": "^1.0"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^10.0"
-    },
-    "autoload": {
-        "classmap": [
-            "core/",
-            "controllers/",
-            "models/"
-        ]
-    },
-    "autoload-dev": {
-        "classmap": [
-            "tests/"
+    "require": {},
+    "scripts": {
+        "post-install-cmd": [
+            "echo 'Heroku deployment ready'"
         ]
     }
 }
+

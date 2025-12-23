@@ -33,7 +33,11 @@ class Tasks
             $status
         );
 
-        return $stmt->execute();
+        if ($stmt->execute()) {
+            return $this->conn->insert_id; // Return the task_id
+        }
+        
+        return false;
     }
 
     public function getAllByUser($user_id)
@@ -89,6 +93,67 @@ class Tasks
         $stmt->bind_param("i", $task_id);
 
         return $stmt->execute();
+    }
+
+    // Get tasks with upcoming deadlines (within specified hours)
+    public function getTasksWithUpcomingDeadlines($hoursAhead = 24)
+    {
+        $query = "SELECT t.*, u.email, u.full_name 
+                  FROM tasks t
+                  INNER JOIN users u ON t.user_id = u.user_id
+                  WHERE t.deadline IS NOT NULL 
+                  AND t.deadline <= DATE_ADD(NOW(), INTERVAL ? HOUR)
+                  AND t.deadline >= NOW()
+                  AND t.status != 'completed'
+                  ORDER BY t.deadline ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $hoursAhead);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    // Get all tasks with deadlines (for admin)
+    public function getAllWithDeadlines()
+    {
+        $query = "SELECT t.*, u.email, u.full_name, c.category_name
+                  FROM tasks t
+                  INNER JOIN users u ON t.user_id = u.user_id
+                  LEFT JOIN categories c ON t.category_id = c.category_id
+                  WHERE t.deadline IS NOT NULL
+                  ORDER BY t.deadline ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    // Get overdue tasks
+    public function getOverdueTasks($user_id = null)
+    {
+        $query = "SELECT t.*, u.email, u.full_name 
+                  FROM tasks t
+                  INNER JOIN users u ON t.user_id = u.user_id
+                  WHERE t.deadline IS NOT NULL 
+                  AND t.deadline < NOW()
+                  AND t.status != 'completed'";
+        
+        if ($user_id) {
+            $query .= " AND t.user_id = ?";
+        }
+        
+        $query .= " ORDER BY t.deadline ASC";
+        
+        $stmt = $this->conn->prepare($query);
+        if ($user_id) {
+            $stmt->bind_param("i", $user_id);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 }
 ?>

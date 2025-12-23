@@ -67,6 +67,12 @@ class AuthController extends Controller
         $created = $this->userModel->register($userData);
 
         if ($created) {
+            // Initialize user statistics
+            $user = $this->userModel->getByEmail($userData['email']);
+            if ($user) {
+                $userStatisticsModel = $this->model("UserStatistics");
+                $userStatisticsModel->create($user['user_id']);
+            }
             return Response::json(true, 'User registered successfully');
         }
 
@@ -94,6 +100,11 @@ class AuthController extends Controller
 
         $_SESSION['user_id'] = $user['user_id'];
         $_SESSION['role']    = $user['role'];
+        
+        // Update last login in user statistics
+        $userStatisticsModel = $this->model("UserStatistics");
+        $userStatisticsModel->create($user['user_id']); // Initialize if not exists
+        $userStatisticsModel->updateLastLogin($user['user_id']);
         
         // Regenerate session ID for security
         // This creates a new session ID and invalidates the old one

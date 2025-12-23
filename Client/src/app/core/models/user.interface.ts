@@ -17,7 +17,7 @@ export interface SignUpResponse {
 export interface LoginResponse {
     success:boolean;
     message:string;
-    data?: {
+        data?: {
         user: User;
     };
 }
@@ -26,4 +26,26 @@ export interface User  {
         name: string;
         email: string;
         role: string;
+    }
+
+    export interface UserStatistics {
+        totalTasks: number;
+        completedTasks: number;
+        createdAt: Date;
+        userId: number;
+        statId: number;
+    }
+    export interface category{
+        user_id:number;
+        category_id:number;
+        category_name:string;
+    }
+
+    export interface profile{
+        id:number;
+        name?: string;
+        full_name?: string;
+        email: string;
+        role: string;
+        created_at:Date;
     }
