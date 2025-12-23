@@ -18,10 +18,17 @@ export class LoginComponent implements OnInit {
   AuthService=inject(AuthService)
   loading = signal(false);
   message = signal('');
+  isSuccessMessage = signal(false);
 
   ngOnInit() {
-  this.email?.valueChanges.subscribe(() => this.message.set(''));
-  this.password?.valueChanges.subscribe(() => this.message.set(''));
+  this.email?.valueChanges.subscribe(() => {
+    this.message.set('');
+    this.isSuccessMessage.set(false);
+  });
+  this.password?.valueChanges.subscribe(() => {
+    this.message.set('');
+    this.isSuccessMessage.set(false);
+  });
 }
 
   login(value:UserLogin){ 
@@ -29,7 +36,6 @@ export class LoginComponent implements OnInit {
     this.AuthService.login(value).pipe(delay(1000)).subscribe({
       next: (res) => {
     this.loading.set(false);
-        this.message.set(res.message);        
         if (res.success && res.data?.user) {
           // Store user data in localStorage
           localStorage.setItem('userRole', res.data.user.role);
@@ -37,15 +43,22 @@ export class LoginComponent implements OnInit {
           localStorage.setItem('userName', res.data.user.name);
           localStorage.setItem('userEmail', res.data.user.email);
           this.AuthService.logged.set(true);
+          // Set success message
+          this.message.set(res.message || 'Login successful!');
+          this.isSuccessMessage.set(true);
+          // Navigate after a short delay to show success message
+          setTimeout(() => {
             this.router.navigate(['/tasks']);
-          // Small delay before navigation for better UX
+          }, 500);
         } else {
           // Handle case where success is true but user data is missing
           this.message.set(res.message || 'Login successful but user data not received');
+          this.isSuccessMessage.set(false);
         }
       },
       error: (err) => {        
   this.loading.set(false);
+  this.isSuccessMessage.set(false);
 
   if (err.status === 401) {
     this.message.set(
