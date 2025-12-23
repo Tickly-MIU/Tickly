@@ -174,24 +174,41 @@ class RemindersController extends Controller
         // Get all due reminders
         $dueReminders = $this->reminderModel->getDueReminders();
 
+        if (empty($dueReminders)) {
+            return Response::json(true, "No due reminders found", [
+                'sent' => 0,
+                'failed' => 0,
+                'total' => 0
+            ]);
+        }
+
         $sentCount = 0;
         $failedCount = 0;
+        $errors = [];
 
         foreach ($dueReminders as $reminder) {
-            $emailSent = $this->sendReminderEmail($reminder);
-            
-            if ($emailSent) {
-                $this->reminderModel->markAsSent($reminder['reminder_id']);
-                $sentCount++;
-            } else {
+            try {
+                $emailSent = $this->sendReminderEmail($reminder);
+                
+                if ($emailSent) {
+                    $this->reminderModel->markAsSent($reminder['reminder_id']);
+                    $sentCount++;
+                } else {
+                    $failedCount++;
+                    $errors[] = "Failed to send to: " . ($reminder['email'] ?? 'unknown');
+                }
+            } catch (Exception $e) {
                 $failedCount++;
+                $errors[] = "Error sending to {$reminder['email']}: " . $e->getMessage();
+                error_log("RemindersController: Error processing reminder ID {$reminder['reminder_id']}: " . $e->getMessage());
             }
         }
 
         return Response::json(true, "Notification processing completed", [
             'sent' => $sentCount,
             'failed' => $failedCount,
-            'total' => count($dueReminders)
+            'total' => count($dueReminders),
+            'errors' => $errors
         ]);
     }
 
@@ -229,67 +246,83 @@ class RemindersController extends Controller
     // ---------------------------
     private function sendReminderEmail($reminder)
     {
-        $userEmail = $reminder['email'];
-        $userName = $reminder['full_name'];
-        $taskTitle = $reminder['title'];
-        $deadline = $reminder['deadline'];
-        $reminderTime = $reminder['reminder_time'];
-        $description = $reminder['description'] ?? '';
-        $priority = $reminder['priority'] ?? 'medium';
+        try {
+            $userEmail = $reminder['email'] ?? null;
+            $userName = htmlspecialchars($reminder['full_name'] ?? 'User');
+            $taskTitle = htmlspecialchars($reminder['title'] ?? 'Task');
+            $deadline = $reminder['deadline'] ?? null;
+            $reminderTime = $reminder['reminder_time'] ?? null;
+            $description = htmlspecialchars($reminder['description'] ?? '');
+            $priority = htmlspecialchars($reminder['priority'] ?? 'medium');
 
-        $subject = "Reminder: Task '{$taskTitle}' - Deadline Approaching";
+            if (!$userEmail || !$deadline || !$reminderTime) {
+                error_log("RemindersController: Missing required fields for reminder email");
+                return false;
+            }
 
-        $deadlineFormatted = date('F j, Y g:i A', strtotime($deadline));
-        $reminderTimeFormatted = date('F j, Y g:i A', strtotime($reminderTime));
+            $subject = "Reminder: Task '{$taskTitle}' - Deadline Approaching";
 
-        $body = "
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset='UTF-8'>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background-color: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
-                .content { background-color: #f9fafb; padding: 30px; border-radius: 0 0 5px 5px; }
-                .task-info { background-color: white; padding: 20px; margin: 20px 0; border-left: 4px solid #4F46E5; border-radius: 4px; }
-                .deadline { color: #DC2626; font-weight: bold; font-size: 18px; }
-                .priority { display: inline-block; padding: 5px 10px; border-radius: 4px; margin-top: 10px; }
-                .priority-high { background-color: #FEE2E2; color: #991B1B; }
-                .priority-medium { background-color: #FEF3C7; color: #92400E; }
-                .priority-low { background-color: #D1FAE5; color: #065F46; }
-                .footer { text-align: center; margin-top: 30px; color: #6B7280; font-size: 12px; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h1>📋 Task Reminder</h1>
-                </div>
-                <div class='content'>
-                    <p>Hello {$userName},</p>
-                    <p>This is a reminder about your upcoming task deadline:</p>
-                    
-                    <div class='task-info'>
-                        <h2>{$taskTitle}</h2>
-                        " . (!empty($description) ? "<p>{$description}</p>" : "") . "
-                        <p class='deadline'>⏰ Deadline: {$deadlineFormatted}</p>
-                        <p>Reminder Time: {$reminderTimeFormatted}</p>
-                        <span class='priority priority-{$priority}'>Priority: " . ucfirst($priority) . "</span>
-                    </div>
-                    
-                    <p>Please make sure to complete this task before the deadline.</p>
-                    
-                    <div class='footer'>
-                        <p>This is an automated reminder from Tickly Task Management System.</p>
-                    </div>
-                </div>
+            $deadlineFormatted = date('F j, Y g:i A', strtotime($deadline));
+            $reminderTimeFormatted = date('F j, Y g:i A', strtotime($reminderTime));
+
+            $descriptionHtml = !empty($description) ? "<p>" . nl2br($description) . "</p>" : "";
+
+            $body = "<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+        .content { background-color: #f9fafb; padding: 30px; border-radius: 0 0 5px 5px; }
+        .task-info { background-color: white; padding: 20px; margin: 20px 0; border-left: 4px solid #4F46E5; border-radius: 4px; }
+        .deadline { color: #DC2626; font-weight: bold; font-size: 18px; }
+        .priority { display: inline-block; padding: 5px 10px; border-radius: 4px; margin-top: 10px; }
+        .priority-high { background-color: #FEE2E2; color: #991B1B; }
+        .priority-medium { background-color: #FEF3C7; color: #92400E; }
+        .priority-low { background-color: #D1FAE5; color: #065F46; }
+        .footer { text-align: center; margin-top: 30px; color: #6B7280; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>📋 Task Reminder</h1>
+        </div>
+        <div class='content'>
+            <p>Hello {$userName},</p>
+            <p>This is a reminder about your upcoming task deadline:</p>
+            
+            <div class='task-info'>
+                <h2>{$taskTitle}</h2>
+                {$descriptionHtml}
+                <p class='deadline'>⏰ Deadline: {$deadlineFormatted}</p>
+                <p>Reminder Time: {$reminderTimeFormatted}</p>
+                <span class='priority priority-{$priority}'>Priority: " . ucfirst($priority) . "</span>
             </div>
-        </body>
-        </html>
-        ";
+            
+            <p>Please make sure to complete this task before the deadline.</p>
+            
+            <div class='footer'>
+                <p>This is an automated reminder from Tickly Task Management System.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>";
 
-        return Mailer::send($userEmail, $subject, $body);
+            $result = Mailer::send($userEmail, $subject, $body);
+            
+            if (!$result) {
+                error_log("RemindersController: Failed to send reminder email to {$userEmail} for task: {$taskTitle}");
+            }
+            
+            return $result;
+        } catch (Exception $e) {
+            error_log("RemindersController: Exception in sendReminderEmail: " . $e->getMessage());
+            return false;
+        }
     }
 
     // ---------------------------
@@ -297,67 +330,83 @@ class RemindersController extends Controller
     // ---------------------------
     private function sendDeadlineEmail($task)
     {
-        $userEmail = $task['email'];
-        $userName = $task['full_name'];
-        $taskTitle = $task['title'];
-        $deadline = $task['deadline'];
-        $description = $task['description'] ?? '';
-        $priority = $task['priority'] ?? 'medium';
+        try {
+            $userEmail = $task['email'] ?? null;
+            $userName = htmlspecialchars($task['full_name'] ?? 'User');
+            $taskTitle = htmlspecialchars($task['title'] ?? 'Task');
+            $deadline = $task['deadline'] ?? null;
+            $description = htmlspecialchars($task['description'] ?? '');
+            $priority = htmlspecialchars($task['priority'] ?? 'medium');
 
-        $subject = "⚠️ Task Deadline Approaching: '{$taskTitle}'";
+            if (!$userEmail || !$deadline) {
+                error_log("RemindersController: Missing required fields for deadline email");
+                return false;
+            }
 
-        $deadlineFormatted = date('F j, Y g:i A', strtotime($deadline));
-        $timeRemaining = $this->getTimeRemaining($deadline);
+            $subject = "⚠️ Task Deadline Approaching: '{$taskTitle}'";
 
-        $body = "
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset='UTF-8'>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background-color: #DC2626; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
-                .content { background-color: #f9fafb; padding: 30px; border-radius: 0 0 5px 5px; }
-                .task-info { background-color: white; padding: 20px; margin: 20px 0; border-left: 4px solid #DC2626; border-radius: 4px; }
-                .deadline { color: #DC2626; font-weight: bold; font-size: 18px; }
-                .time-remaining { background-color: #FEE2E2; padding: 15px; border-radius: 4px; margin: 15px 0; text-align: center; font-size: 16px; font-weight: bold; }
-                .priority { display: inline-block; padding: 5px 10px; border-radius: 4px; margin-top: 10px; }
-                .priority-high { background-color: #FEE2E2; color: #991B1B; }
-                .priority-medium { background-color: #FEF3C7; color: #92400E; }
-                .priority-low { background-color: #D1FAE5; color: #065F46; }
-                .footer { text-align: center; margin-top: 30px; color: #6B7280; font-size: 12px; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h1>⚠️ Deadline Approaching</h1>
-                </div>
-                <div class='content'>
-                    <p>Hello {$userName},</p>
-                    <p>You have a task with an approaching deadline:</p>
-                    
-                    <div class='task-info'>
-                        <h2>{$taskTitle}</h2>
-                        " . (!empty($description) ? "<p>{$description}</p>" : "") . "
-                        <p class='deadline'>⏰ Deadline: {$deadlineFormatted}</p>
-                        <div class='time-remaining'>{$timeRemaining}</div>
-                        <span class='priority priority-{$priority}'>Priority: " . ucfirst($priority) . "</span>
-                    </div>
-                    
-                    <p>Please make sure to complete this task before the deadline.</p>
-                    
-                    <div class='footer'>
-                        <p>This is an automated notification from Tickly Task Management System.</p>
-                    </div>
-                </div>
+            $deadlineFormatted = date('F j, Y g:i A', strtotime($deadline));
+            $timeRemaining = htmlspecialchars($this->getTimeRemaining($deadline));
+
+            $descriptionHtml = !empty($description) ? "<p>" . nl2br($description) . "</p>" : "";
+
+            $body = "<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #DC2626; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+        .content { background-color: #f9fafb; padding: 30px; border-radius: 0 0 5px 5px; }
+        .task-info { background-color: white; padding: 20px; margin: 20px 0; border-left: 4px solid #DC2626; border-radius: 4px; }
+        .deadline { color: #DC2626; font-weight: bold; font-size: 18px; }
+        .time-remaining { background-color: #FEE2E2; padding: 15px; border-radius: 4px; margin: 15px 0; text-align: center; font-size: 16px; font-weight: bold; }
+        .priority { display: inline-block; padding: 5px 10px; border-radius: 4px; margin-top: 10px; }
+        .priority-high { background-color: #FEE2E2; color: #991B1B; }
+        .priority-medium { background-color: #FEF3C7; color: #92400E; }
+        .priority-low { background-color: #D1FAE5; color: #065F46; }
+        .footer { text-align: center; margin-top: 30px; color: #6B7280; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>⚠️ Deadline Approaching</h1>
+        </div>
+        <div class='content'>
+            <p>Hello {$userName},</p>
+            <p>You have a task with an approaching deadline:</p>
+            
+            <div class='task-info'>
+                <h2>{$taskTitle}</h2>
+                {$descriptionHtml}
+                <p class='deadline'>⏰ Deadline: {$deadlineFormatted}</p>
+                <div class='time-remaining'>{$timeRemaining}</div>
+                <span class='priority priority-{$priority}'>Priority: " . ucfirst($priority) . "</span>
             </div>
-        </body>
-        </html>
-        ";
+            
+            <p>Please make sure to complete this task before the deadline.</p>
+            
+            <div class='footer'>
+                <p>This is an automated notification from Tickly Task Management System.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>";
 
-        return Mailer::send($userEmail, $subject, $body);
+            $result = Mailer::send($userEmail, $subject, $body);
+            
+            if (!$result) {
+                error_log("RemindersController: Failed to send deadline email to {$userEmail} for task: {$taskTitle}");
+            }
+            
+            return $result;
+        } catch (Exception $e) {
+            error_log("RemindersController: Exception in sendDeadlineEmail: " . $e->getMessage());
+            return false;
+        }
     }
 
     // ---------------------------
