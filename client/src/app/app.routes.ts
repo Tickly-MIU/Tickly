@@ -4,7 +4,7 @@ import { adminGuard } from './core/guards/admin-guard';
 
 export const routes: Routes = [
     {path: '', loadComponent: () => import('./features/landing-page/landing-page.component').then(m => m.LandingPageComponent),pathMatch: 'full'},
-    {path: 'home', loadComponent: () => import('./features/home/home.component').then(m => m.HomeComponent) , canActivate: [tokenGuard]},
+    {path: 'tasks', loadComponent: () => import('./features/home/home.component').then(m => m.HomeComponent) , canActivate: [tokenGuard]},
 
     {path: 'profile', loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)     , canActivate: [tokenGuard]},
     {path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent), canActivate: [tokenGuard,adminGuard]},
