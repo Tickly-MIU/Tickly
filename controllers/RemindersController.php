@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../core/Controller.php';
 require_once __DIR__ . '/../core/Response.php';
 require_once __DIR__ . '/../core/AuthMiddleware.php';
-require_once __DIR__ . '/../core/mailer.php';
+require_once __DIR__ . '/../core/Mailer.php';
 
 class RemindersController extends Controller
 {
@@ -63,6 +63,10 @@ class RemindersController extends Controller
     // ---------------------------
     public function getMyReminders($data = [])
     {
+        // Automatically check and send any due reminders when reminders are accessed
+        // This ensures reminders are sent whenever users access the app
+        $this->processDueReminders();
+        
         $user_id = $_SESSION['user_id'];
         $reminders = $this->reminderModel->getByUserId($user_id);
 
@@ -197,6 +201,36 @@ class RemindersController extends Controller
             'current_server_time' => date('Y-m-d H:i:s'),
             'current_timestamp' => time()
         ]);
+    }
+
+    // ---------------------------
+    // Private: Process Due Reminders (called automatically)
+    // ---------------------------
+    private function processDueReminders()
+    {
+        // Get all due reminders
+        $dueReminders = $this->reminderModel->getDueReminders();
+
+        if (empty($dueReminders)) {
+            return; // No due reminders, nothing to do
+        }
+
+        error_log("RemindersController: Auto-processing " . count($dueReminders) . " due reminders at " . date('Y-m-d H:i:s'));
+
+        foreach ($dueReminders as $reminder) {
+            try {
+                $emailSent = $this->sendReminderEmail($reminder);
+                
+                if ($emailSent) {
+                    $this->reminderModel->markAsSent($reminder['reminder_id']);
+                    error_log("RemindersController: Successfully sent reminder ID {$reminder['reminder_id']} to {$reminder['email']}");
+                } else {
+                    error_log("RemindersController: Failed to send reminder ID {$reminder['reminder_id']} to {$reminder['email']}");
+                }
+            } catch (Exception $e) {
+                error_log("RemindersController: Error processing reminder ID {$reminder['reminder_id']}: " . $e->getMessage());
+            }
+        }
     }
 
     // ---------------------------
