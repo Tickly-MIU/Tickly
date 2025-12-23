@@ -6,6 +6,38 @@
 
         <h3 class="text-3xl font-bold m-4">Your Tasks</h3>
 <div class="p-5 bg-gray-50 min-h-[300px] rounded-2xl grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 gap-5">
+
+    @if(Tasks().length===0) {
+        @for(i of [0,1,2];track i) {
+        <div class="w-full max-w-md mx-auto p-6 rounded-2xl bg-white animate-pulse">
+
+  <!-- Top row -->
+  <div class="flex justify-between items-center mb-4">
+    <div class="h-6 w-16 rounded-full bg-gray-200"></div>
+    <div class="h-5 w-5 rounded bg-gray-200"></div>
+  </div>
+
+  <!-- Title -->
+  <div class="flex justify-center mb-3">
+    <div class="h-7 w-32 rounded bg-gray-200"></div>
+  </div>
+
+  <!-- Subtitle -->
+  <div class="flex justify-center mb-6">
+    <div class="h-4 w-24 rounded bg-gray-200"></div>
+  </div>
+
+  <!-- Button -->
+  <div class="h-12 w-full rounded-xl bg-gray-200 mb-6"></div>
+
+  <!-- Deadline -->
+  <div class="flex justify-center">
+    <div class="h-4 w-40 rounded bg-gray-200"></div>
+  </div>
+
+</div>
+}
+    } @else {
     @for (task of Tasks(); track task.task_id) {
         @if(task.status==='pending') {
     <div class="relative">
@@ -64,6 +96,7 @@
     </div>
     }
     }
+}
 </div>
 
     <button (click)="openModal()" class="active:scale-[0.8] rounded-[50%] bg-violet-800 text-white w-15 aspect-[1] fixed bottom-10 right-10 text-3xl shadow-lg hover:bg-violet-950 transition duration-200">

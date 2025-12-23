@@ -6,22 +6,25 @@ import {
   computed,
   effect,
   signal,
-  inject
+  inject,
+  OnInit
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import { AuthService } from '../../core/services/auth.service';
+import { User, UserStatistics } from '../../core/models/user.interface';
 
 Chart.register(...registerables);
 
-interface User {
+interface DashboardUser {
   id: number;
   name: string;
   email: string;
   role: 'Admin' | 'User';
   status: 'active' | 'inactive';
   dateCreated: Date;
-  totalNotes: number;
-  NotesFinished: number;
+  totalNotes?: number;
+  NotesFinished?: number;
 }
 
 @Component({
@@ -30,63 +33,18 @@ interface User {
   styleUrl: './dashboard.component.css',
   providers: [DatePipe],
 })
-export class DashboardComponent implements AfterViewInit {
+export class DashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('myChart') myChart!: ElementRef<HTMLCanvasElement>;
   @ViewChild('myChart2') myChart2!: ElementRef<HTMLCanvasElement>;
 
-  // Inject DatePipe (NO constructor needed)
+  // Inject services
   private datePipe = inject(DatePipe);
+  private authService = inject(AuthService);
 
   // --------------------------------------------------------
   // USERS SIGNAL
   // --------------------------------------------------------
-users = signal<User[]>([
-  { id: 1,  name: "Liam Brown",        email: "liam.brown@example.com",        role: "User",  status: "active",   dateCreated: new Date("2023-10-02"), totalNotes: 12, NotesFinished: 8 },
-  { id: 2,  name: "Emma Davis",        email: "emma.davis@example.com",        role: "Admin", status: "inactive", dateCreated: new Date("2023-10-05"), totalNotes: 20, NotesFinished: 15 },
-  { id: 3,  name: "Noah Wilson",       email: "noah.wilson@example.com",       role: "User",  status: "active",   dateCreated: new Date("2023-10-11"), totalNotes: 9,  NotesFinished: 7 },
-  { id: 4,  name: "Olivia Martin",     email: "olivia.martin@example.com",     role: "User",  status: "inactive", dateCreated: new Date("2023-10-19"), totalNotes: 5,  NotesFinished: 2 },
-  { id: 5,  name: "Ava Thompson",      email: "ava.thompson@example.com",      role: "Admin", status: "active",   dateCreated: new Date("2023-10-27"), totalNotes: 17, NotesFinished: 12 },
-
-  { id: 6,  name: "Ethan Garcia",      email: "ethan.garcia@example.com",      role: "User",  status: "active",   dateCreated: new Date("2023-11-01"), totalNotes: 14, NotesFinished: 10 },
-  { id: 7,  name: "Mia Rodriguez",     email: "mia.rodriguez@example.com",     role: "User",  status: "inactive", dateCreated: new Date("2023-11-04"), totalNotes: 6,  NotesFinished: 3 },
-  { id: 8,  name: "Lucas Hernandez",   email: "lucas.hernandez@example.com",   role: "Admin", status: "active",   dateCreated: new Date("2023-11-09"), totalNotes: 10, NotesFinished: 7 },
-  { id: 9,  name: "Sophia Lopez",      email: "sophia.lopez@example.com",      role: "User",  status: "active",   dateCreated: new Date("2023-11-15"), totalNotes: 8,  NotesFinished: 5 },
-  { id: 10, name: "James Gonzalez",    email: "james.gonzalez@example.com",    role: "User",  status: "inactive", dateCreated: new Date("2023-11-21"), totalNotes: 4,  NotesFinished: 1 },
-  { id: 11, name: "Benjamin Perez",    email: "benjamin.perez@example.com",    role: "User",  status: "active",   dateCreated: new Date("2023-11-28"), totalNotes: 12, NotesFinished: 6 },
-
-  { id: 12, name: "Charlotte Miller",  email: "charlotte.miller@example.com",  role: "Admin", status: "active",   dateCreated: new Date("2023-12-03"), totalNotes: 16, NotesFinished: 14 },
-  { id: 13, name: "Henry Martinez",    email: "henry.martinez@example.com",    role: "User",  status: "inactive", dateCreated: new Date("2023-12-07"), totalNotes: 7,  NotesFinished: 3 },
-  { id: 14, name: "Amelia Anderson",   email: "amelia.anderson@example.com",   role: "User",  status: "active",   dateCreated: new Date("2023-12-12"), totalNotes: 10, NotesFinished: 5 },
-  { id: 15, name: "Alexander Taylor",  email: "alexander.taylor@example.com",  role: "Admin", status: "active",   dateCreated: new Date("2023-12-18"), totalNotes: 11, NotesFinished: 8 },
-  { id: 16, name: "Harper Thomas",     email: "harper.thomas@example.com",     role: "User",  status: "inactive", dateCreated: new Date("2023-12-22"), totalNotes: 5,  NotesFinished: 2 },
-  { id: 17, name: "William Jackson",   email: "william.jackson@example.com",   role: "User",  status: "active",   dateCreated: new Date("2023-12-26"), totalNotes: 18, NotesFinished: 12 },
-  { id: 18, name: "Evelyn White",      email: "evelyn.white@example.com",      role: "Admin", status: "inactive", dateCreated: new Date("2023-12-30"), totalNotes: 14, NotesFinished: 10 },
-
-  { id: 19, name: "Daniel Harris",     email: "daniel.harris@example.com",     role: "User",  status: "active",   dateCreated: new Date("2024-01-02"), totalNotes: 9,  NotesFinished: 4 },
-  { id: 20, name: "Grace Clark",       email: "grace.clark@example.com",       role: "User",  status: "active",   dateCreated: new Date("2024-01-05"), totalNotes: 7,  NotesFinished: 3 },
-  { id: 21, name: "Elijah Lewis",      email: "elijah.lewis@example.com",      role: "User",  status: "inactive", dateCreated: new Date("2024-01-09"), totalNotes: 3,  NotesFinished: 1 },
-  { id: 22, name: "Chloe Lee",         email: "chloe.lee@example.com",         role: "Admin", status: "active",   dateCreated: new Date("2024-01-13"), totalNotes: 19, NotesFinished: 16 },
-  { id: 23, name: "Logan Walker",      email: "logan.walker@example.com",      role: "User",  status: "active",   dateCreated: new Date("2024-01-17"), totalNotes: 12, NotesFinished: 9 },
-  { id: 24, name: "Aria Hall",         email: "aria.hall@example.com",         role: "User",  status: "inactive", dateCreated: new Date("2024-01-21"), totalNotes: 8,  NotesFinished: 6 },
-  { id: 25, name: "Jackson Young",     email: "jackson.young@example.com",     role: "User",  status: "active",   dateCreated: new Date("2024-01-24"), totalNotes: 10, NotesFinished: 8 },
-  { id: 26, name: "Scarlett Allen",    email: "scarlett.allen@example.com",    role: "User",  status: "active",   dateCreated: new Date("2024-01-29"), totalNotes: 6,  NotesFinished: 4 },
-
-  { id: 27, name: "Sebastian King",    email: "sebastian.king@example.com",    role: "Admin", status: "inactive", dateCreated: new Date("2024-02-01"), totalNotes: 13, NotesFinished: 9 },
-  { id: 28, name: "Lily Wright",       email: "lily.wright@example.com",       role: "User",  status: "active",   dateCreated: new Date("2024-02-06"), totalNotes: 9,  NotesFinished: 5 },
-  { id: 29, name: "Mateo Scott",       email: "mateo.scott@example.com",       role: "User",  status: "inactive", dateCreated: new Date("2024-02-11"), totalNotes: 8,  NotesFinished: 4 },
-  { id: 30, name: "Hannah Green",      email: "hannah.green@example.com",      role: "User",  status: "active",   dateCreated: new Date("2024-02-16"), totalNotes: 15, NotesFinished: 10 },
-  { id: 31, name: "Jacob Adams",       email: "jacob.adams@example.com",       role: "User",  status: "active",   dateCreated: new Date("2024-02-20"), totalNotes: 12, NotesFinished: 7 },
-  { id: 32, name: "Zoey Baker",        email: "zoey.baker@example.com",        role: "Admin", status: "inactive", dateCreated: new Date("2024-02-24"), totalNotes: 14, NotesFinished: 9 },
-  { id: 33, name: "Michael Nelson",    email: "michael.nelson@example.com",    role: "User",  status: "active",   dateCreated: new Date("2024-02-28"), totalNotes: 7,  NotesFinished: 5 },
-
-  { id: 34, name: "Layla Carter",      email: "layla.carter@example.com",      role: "User",  status: "inactive", dateCreated: new Date("2024-03-02"), totalNotes: 4,  NotesFinished: 2 },
-  { id: 35, name: "Samuel Mitchell",   email: "samuel.mitchell@example.com",   role: "User",  status: "active",   dateCreated: new Date("2024-03-06"), totalNotes: 11, NotesFinished: 7 },
-  { id: 36, name: "Nora Perez",        email: "nora.perez@example.com",        role: "User",  status: "active",   dateCreated: new Date("2024-03-10"), totalNotes: 9,  NotesFinished: 6 },
-  { id: 37, name: "David Roberts",     email: "david.roberts@example.com",     role: "Admin", status: "inactive", dateCreated: new Date("2024-03-14"), totalNotes: 18, NotesFinished: 12 },
-  { id: 38, name: "Riley Turner",      email: "riley.turner@example.com",      role: "User",  status: "active",   dateCreated: new Date("2024-03-18"), totalNotes: 10, NotesFinished: 8 },
-  { id: 39, name: "Wyatt Phillips",    email: "wyatt.phillips@example.com",    role: "User",  status: "inactive", dateCreated: new Date("2024-03-22"), totalNotes: 5,  NotesFinished: 1 },
-  { id: 40, name: "Victoria Campbell", email: "victoria.campbell@example.com", role: "User",  status: "active",   dateCreated: new Date("2024-03-27"), totalNotes: 14, NotesFinished: 11 },
-]);
+  users = signal<DashboardUser[]>([]);
 
 
   // --------------------------------------------------------
@@ -128,6 +86,32 @@ users = signal<User[]>([
   private chart2?: Chart;
 
   // --------------------------------------------------------
+  // FETCH USERS FROM API
+  // --------------------------------------------------------
+  ngOnInit(): void {
+    this.authService.getUsers().subscribe({
+      next: (response: any) => {
+        // Transform API response to DashboardUser format
+        const usersData = response.data || response || [];
+        const transformedUsers: DashboardUser[] = usersData.map((user: any) => ({
+          id: user.id,
+          name: user.name || user.full_name || '',
+          email: user.email,
+          role: user.role === 'admin' || user.role === 'Admin' ? 'Admin' : 'User',
+          status: user.status || (user.isActive ? 'active' : 'inactive'),
+          dateCreated: user.created_at ? new Date(user.created_at) : new Date(),
+          totalNotes: user.totalNotes || user.totalTasks || 0,
+          NotesFinished: user.NotesFinished || user.completedTasks || 0
+        }));
+        this.users.set(transformedUsers);
+      },
+      error: (error) => {
+        console.error('Error fetching users:', error);
+      }
+    });
+  }
+
+  // --------------------------------------------------------
   // EFFECT: AUTO-UPDATE CHARTS WHEN SIGNALS CHANGE
   // --------------------------------------------------------
   private updateEffect = effect(() => {
@@ -162,8 +146,8 @@ users = signal<User[]>([
   // CHART INITIALIZATION
   // --------------------------------------------------------
   private initCharts(): void {
-    const pieConfig: ChartConfiguration<'pie'> = {
-      type: 'pie',
+    const barConfig: ChartConfiguration<'bar'> = {
+      type: 'bar',
       data: {
         labels: ['Active Users', 'Inactive Users'],
         datasets: [
@@ -171,12 +155,27 @@ users = signal<User[]>([
             label: 'Users',
             data: [this.usersActiveCount(), this.usersInactiveCount()],
             backgroundColor: ['#5B21B6', '#A78BFA'],
+            borderColor: ['#4C1D95', '#8B5CF6'],
+            borderWidth: 2,
           },
         ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+            },
+          },
+        },
       },
     };
 
@@ -203,7 +202,7 @@ users = signal<User[]>([
       },
     };
 
-    this.chart = new Chart(this.myChart.nativeElement, pieConfig);
+    this.chart = new Chart(this.myChart.nativeElement, barConfig);
     this.chart2 = new Chart(this.myChart2.nativeElement, lineConfig);
   }
 }

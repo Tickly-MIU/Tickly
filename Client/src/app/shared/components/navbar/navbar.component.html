@@ -24,7 +24,7 @@
         height="24"
         fill="none"
         viewBox="0 0 24 24"
-      >
+    >
         <path
           stroke="currentColor"
           stroke-linecap="round"
@@ -34,9 +34,8 @@
       </svg>
     </button>
     <div class="hidden w-full md:block md:w-auto" id="navbar-default">
-      <div>
-
-        @if(!loggedIn){
+      <div class="flex flex-col md:flex-row">
+        @if(!loggedIn()) {
         <a
           routerLink="/register"
           routerLinkActive="!text-violet-800"
@@ -52,17 +51,15 @@
           >Login</a
         >
         }@else {
-
-
-                  <a
-          routerLink="/tasks"
+        <a
+          routerLink="/home"
           routerLinkActive="!text-violet-800"
           type="button"
           class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
           >Tasks</a
         >
-                  @if (isAdmin) {
- <a
+        @if (isAdmin()) {
+        <a
           routerLink="/dashboard"
           routerLinkActive="!text-violet-800"
           type="button"
@@ -70,7 +67,7 @@
           >Dashboard</a
         >
           }
-                <a
+        <a
           routerLink="/profile"
           routerLinkActive="!text-violet-800"
           type="button"
@@ -83,10 +80,58 @@
           class="text-black font-medium text-sm px-5 py-2.5 text-center me-2 mb-2 transition-all duration-200"
           >Logout</a
           >
+        <div class="relative">
+          <button
+            (click)="toggleDropdown()"
+            type="button"
+            class="relative text-violet-800 text-xl p-2 hover:bg-neutral-secondary-soft rounded-base transition-all duration-200"
+          >
+            <i class="fa-solid fa-bell"></i>
+            @if (reminders().length > 0) {
+              <span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {{ reminders().length }}
+              </span>
+            }
+          </button>
+          @if (dropdownOpen()) {
+            <div class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-default z-50 max-h-96 overflow-y-auto">
+              <div class="p-4 border-b border-default">
+                <h3 class="text-lg font-semibold text-violet-800">Reminders</h3>
+              </div>
+              <div class="p-2">
+                @if (reminders().length === 0) {
+                  <div class="p-4 text-center text-gray-500">
+                    No reminders available
+                  </div>
+                } @else {
+                  @for (reminder of reminders(); track reminder.reminder_id) {
+                    <div class="p-3 mb-2 hover:bg-neutral-secondary-soft rounded-base transition-all duration-200 border-b border-default last:border-b-0">
+                      <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                          <p class="text-sm font-medium text-heading">Task ID: {{ reminder.task_id }}</p>
+                          <p class="text-xs text-body mt-1">
+                            {{ reminder.reminder_time | date:'short' }}
+                          </p>
+                        </div>
+                        <div class="ml-2">
+                          @if (reminder.sent) {
+                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Sent</span>
+                          } @else {
+                            <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Pending</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
         }
       </div>
     </div>
   </div>
 </nav>
 
-<div class="my-20"></div>
+<div class="my-22"></div>
