@@ -39,9 +39,22 @@
                     </button>
 
                     <a routerLink="/reset-password" class="text-gray-500/70 ms-2">Forgot Password</a>
-                        <div [class.hidden]="!message()" class="flex items-center p-4 mt-4 text-sm text-black border border-red-950 rounded-lg bg-red-300" role="alert">
-                            <span class="font-medium">{{message()}}</span>
-                        </div>
+                        @if(message()) {
+                            <div [class.bg-green-50]="isSuccessMessage()" 
+                                 [class.border-green-500]="isSuccessMessage()"
+                                 [class.text-green-800]="isSuccessMessage()"
+                                 [class.bg-red-50]="!isSuccessMessage()"
+                                 [class.border-red-500]="!isSuccessMessage()"
+                                 [class.text-red-800]="!isSuccessMessage()"
+                                 class="flex items-center p-4 mt-4 text-sm border rounded-lg" role="alert">
+                                @if(isSuccessMessage()) {
+                                    <i class="fa-solid fa-check-circle mr-2"></i>
+                                } @else {
+                                    <i class="fa-solid fa-exclamation-circle mr-2"></i>
+                                }
+                                <span class="font-medium">{{message()}}</span>
+                            </div>
+                        }
                 </form>
         </div>
         <div class="w-1/2 h-full text-center p-5 flex flex-col justify-center items-center">
