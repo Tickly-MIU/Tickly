@@ -1,3 +1,4 @@
+
 <?php
 class Response
 {
@@ -30,5 +31,4 @@ class Response
         exit;
     }
 }
-?>
 
